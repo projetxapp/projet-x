@@ -189,11 +189,11 @@ export default function ExplorerPage() {
 
   const filtered = items.filter((item: any) => {
     const q = search.toLowerCase()
-    const matchSearch = q === '' || (
-      item.isProject
-        ? `${item.name} ${item.sector} ${item.founder}`.toLowerCase().includes(q)
-        : `${item.firstName} ${item.lastName} ${item.poste}`.toLowerCase().includes(q)
-    )
+const matchSearch = q === '' || (
+  item.isProject
+    ? `${item.name || ''} ${item.sector || ''} ${item.founder || ''} ${(item.needs || []).join(' ')}`.toLowerCase().includes(q)
+    : `${item.firstName || ''} ${item.lastName || ''} ${item.poste || ''} ${(item.skills || []).join(' ')}`.toLowerCase().includes(q)
+)
     const matchStage = filterStage.length === 0 || (item.isProject && filterStage.includes(item.stage))
     const matchMode = filterMode.length === 0 || item.modes?.some((m: string) => filterMode.includes(m))
     return matchSearch && matchStage && matchMode
