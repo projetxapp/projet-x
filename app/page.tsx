@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { supabase } from './lib/supabase'
 
 const ROLES = [
@@ -43,35 +43,30 @@ const ALL_SKILLS = [
   'Google Cloud', 'GraphQL', 'Ghostwriting', 'Guitare',
   'HTML', 'Hubspot', 'Hardware',
   'Illustration numérique', 'InDesign', 'Influence Marketing', 'Instagram', 'IoT',
-  'JavaScript', 'Journalisme', 'Judo',
-  'Kotlin', 'Kubernetes',
+  'JavaScript', 'Journalisme', 'Judo', 'Kotlin', 'Kubernetes',
   'LangChain', 'Laravel', 'Leadership', 'Lightroom', 'LinkedIn', 'LinkedIn Ads',
   'Live streaming', 'Logic Pro', 'Logo design',
   'Machine Learning', 'Make', 'Management', 'Mannequin', 'Mannequin e-commerce',
   'Mannequin mode', 'Mannequin photo', 'Marketing', 'Mastering', 'Massage', 'Maya',
   'Méditation', 'Mixage audio', 'Mixologie', 'Mixpanel', 'MongoDB', 'Motion Design', 'MySQL',
   'n8n', 'Nail art', 'NestJS', 'Newsletter', 'NFT', 'NLP', 'Node.js', 'Notion', 'Nutrition',
-  'OpenAI API', 'OSINT',
-  'Packaging', 'Pandas', 'Pentest', 'Personal shopper', 'Personal training',
+  'OpenAI API', 'OSINT', 'Packaging', 'Pandas', 'Pentest', 'Personal shopper', 'Personal training',
   'PHP', 'Photographie', 'Photographie mariage', 'Photographie mode', 'Photographie portrait',
   'Photographie produit', 'Photoshop', 'Piano', 'Pilates', 'Pixel Art', 'PNL',
   'Podcast production', 'PostgreSQL', 'Power BI', 'Premiere Pro', 'Procreate',
   'Product Management', 'Product Owner', 'Pro Tools', 'Prompt Engineering',
-  'Prospection B2B', 'PWA', 'PyTorch', 'Python',
-  'QA Testing', 'Rap', 'React', 'React Native', 'Recrutement', 'Rédaction SEO',
-  'Rédaction web', 'Redis', 'REST API', 'Retool', 'Retouche photo', 'RGPD',
-  'Ruby on Rails', 'Running', 'Rust',
+  'Prospection B2B', 'PWA', 'PyTorch', 'Python', 'QA Testing', 'Rap',
+  'React', 'React Native', 'Recrutement', 'Rédaction SEO', 'Rédaction web', 'Redis',
+  'REST API', 'Retool', 'Retouche photo', 'RGPD', 'Ruby on Rails', 'Running', 'Rust',
   'Salesforce', 'Sales', 'Sass', 'Scrum', 'SEA', 'SEO', 'Service client', 'SFX makeup',
   'Shopify', 'Smart Contracts', 'Social Media Management', 'Solidity', 'Sound design',
   'Sophrologie', 'Spring Boot', 'SQL', 'Stable Diffusion', 'Stand-up', 'Storyboard',
   'Storytelling', 'Studio photo', 'Supabase', 'Surf', 'Swift', 'SwiftUI',
   'Tableau', 'Tailwind CSS', 'Tatouage', 'TensorFlow', 'Théâtre', 'TikTok', 'TikTok Ads',
   'TikTok production', 'Trading crypto', 'Traduction FR/EN', 'Traduction FR/ES',
-  'TypeScript', 'Twitch',
-  'UI Design', 'Unity', 'Unreal Engine', 'UX Design', 'UX Research', 'UX Writing',
-  'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
-  'Web3', 'Webflow', 'WordPress',
-  'Yoga', 'YouTube', 'YouTube production', 'ZBrush', 'Zapier',
+  'TypeScript', 'Twitch', 'UI Design', 'Unity', 'Unreal Engine', 'UX Design', 'UX Research',
+  'UX Writing', 'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
+  'Web3', 'Webflow', 'WordPress', 'Yoga', 'YouTube', 'YouTube production', 'ZBrush', 'Zapier',
 ].sort()
 
 const POPULAR_SKILLS = [
@@ -174,7 +169,8 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
           <circle cx="11" cy="11" r="8" stroke={focused ? '#A78BFA' : muted} strokeWidth="2" />
           <path d="M21 21L16.65 16.65" stroke={focused ? '#A78BFA' : muted} strokeWidth="2" strokeLinecap="round" />
         </svg>
-        <input value={query}
+        <input
+          value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => { setFocused(true); setOpen(true) }}
           onBlur={() => { setFocused(false); setTimeout(() => setOpen(false), 150) }}
@@ -225,9 +221,9 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
           <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
             {POPULAR_SKILLS.map((s, i) => (
               <button key={i} onClick={() => handleAdd(s)}
-                style={{ padding: '6px 12px', borderRadius: '20px', border: `1px solid ${cardBorder}`, background: surface, color: muted, fontSize: '11px', cursor: 'pointer', transition: 'all 0.15s' }}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.07)', background: '#1A1828', color: 'rgba(255,255,255,0.4)', fontSize: '11px', cursor: 'pointer', transition: 'all 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#6D28D9'; e.currentTarget.style.color = '#A78BFA' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = cardBorder; e.currentTarget.style.color = muted }}>
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}>
                 + {s}
               </button>
             ))}
@@ -307,9 +303,7 @@ export default function OnboardingPage() {
       if (!userId) throw new Error('Erreur lors de la création du compte')
 
       await supabase.from('profiles').update({
-        age: parseInt(age),
-        city: ville,
-        active_mode: selectedRoles[0] || 'talent',
+        age: parseInt(age), city: ville, active_mode: selectedRoles[0] || 'talent',
       }).eq('id', userId)
 
       for (const role of selectedRoles) {
@@ -379,22 +373,6 @@ export default function OnboardingPage() {
     boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit',
   }
 
-  const stepTitles: Record<StepType, { title: string; sub: string; accent?: string }> = {
-    info: { title: 'Créer mon compte', sub: 'On commence par les bases' },
-    roles: { title: 'Qui es-tu ?', sub: 'Choisis un ou plusieurs profils' },
-    talent: { title: '⚡ Ton profil Talent', sub: 'Pour trouver les projets qui te correspondent', accent: '#A78BFA' },
-    project: { title: '🚀 Ton profil Projet', sub: 'Pour attirer les bons talents et investisseurs', accent: '#22D3EE' },
-    investor: { title: '💎 Ton profil Investisseur', sub: 'Pour matcher avec les projets qui t\'intéressent', accent: '#FCD34D' },
-    recap: { title: 'C\'est parti !', sub: 'Ton profil est prêt 🎉' },
-  }
-  const current = stepTitles[currentStepType]
-
-  function ctaLabel() {
-    if (loading) return '⏳ Création en cours...'
-    if (currentStepType === 'recap') return 'Découvrir l\'app 🚀'
-    return 'Continuer →'
-  }
-
   const villeSuggestions = villeQuery.length >= 1
     ? VILLES.filter(v => v.toLowerCase().startsWith(villeQuery.toLowerCase())).slice(0, 5)
     : []
@@ -448,7 +426,8 @@ export default function OnboardingPage() {
     return (
       <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow: 'hidden' }}>
         <div style={{ padding: '48px 28px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          <button onClick={() => { setPageMode('welcome'); setError('') }} style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => { setPageMode('welcome'); setError('') }}
+            style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           <div>
@@ -491,6 +470,16 @@ export default function OnboardingPage() {
   }
 
   // ── SIGNUP ──
+  const stepTitles: Record<StepType, { title: string; sub: string; accent?: string }> = {
+    info: { title: 'Créer mon compte', sub: 'On commence par les bases' },
+    roles: { title: 'Qui es-tu ?', sub: 'Choisis un ou plusieurs profils' },
+    talent: { title: '⚡ Ton profil Talent', sub: 'Pour trouver les projets qui te correspondent', accent: '#A78BFA' },
+    project: { title: '🚀 Ton profil Projet', sub: 'Pour attirer les bons talents et investisseurs', accent: '#22D3EE' },
+    investor: { title: '💎 Ton profil Investisseur', sub: 'Pour matcher avec les projets qui t\'intéressent', accent: '#FCD34D' },
+    recap: { title: 'C\'est parti !', sub: 'Ton profil est prêt 🎉' },
+  }
+  const current = stepTitles[currentStepType]
+
   return (
     <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow: 'hidden' }}>
       <div style={{ padding: '40px 24px 16px', flexShrink: 0 }}>
@@ -538,11 +527,11 @@ export default function OnboardingPage() {
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
             </div>
+
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge</div>
-                <input type="number" min="16" max="99" value={age} onChange={e => setAge(e.target.value)} placeholder="22"
-                  style={{ ...inputStyle }}
+                <input type="number" min="16" max="99" value={age} onChange={e => setAge(e.target.value)} placeholder="22" style={inputStyle}
                   onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
@@ -554,8 +543,7 @@ export default function OnboardingPage() {
                   onFocus={() => setVilleOpen(true)}
                   onBlur={() => setTimeout(() => setVilleOpen(false), 150)}
                   placeholder="Paris..."
-                  style={{ ...inputStyle }}
-                  onFocus2={e => (e.currentTarget.style.borderColor = '#6D28D9')}
+                  style={inputStyle}
                 />
                 {villeOpen && villeSuggestions.length > 0 && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#111019', border: `1px solid ${cardBorder}`, borderRadius: '12px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
@@ -571,6 +559,7 @@ export default function OnboardingPage() {
                 )}
               </div>
             </div>
+
             <div>
               <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</div>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inputStyle}
@@ -603,8 +592,7 @@ export default function OnboardingPage() {
               return (
                 <div key={role.id} onClick={() => toggleRole(role.id)}
                   style={{ padding: '16px 18px', borderRadius: '20px', border: `2px solid ${active ? role.border : cardBorder}`, background: active ? role.bg : surface, cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }}>
-                  {active && <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 15% 50%, ${role.glow.replace('0.35', '0.06')}, transparent 65%)`, pointerEvents: 'none' }} />}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <div style={{ width: 46, height: 46, borderRadius: '13px', background: active ? role.gradient : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, boxShadow: active ? `0 8px 24px ${role.glow}` : 'none' }}>
                       {role.emoji}
                     </div>
@@ -715,7 +703,6 @@ export default function OnboardingPage() {
         {/* RECAP */}
         {currentStepType === 'recap' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '4px' }}>
-            {/* Avatar */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: primaryRole.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '900', color: 'white', boxShadow: `0 16px 48px ${primaryRole.glow}`, marginBottom: '10px' }}>
                 {firstName ? firstName[0].toUpperCase() : '?'}
@@ -724,17 +711,15 @@ export default function OnboardingPage() {
               <div style={{ fontSize: '12px', color: muted, marginTop: '4px' }}>Tu pourras compléter ton profil à tout moment ✦</div>
             </div>
 
-            {/* Infos de base */}
             <div style={{ background: surface, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px 16px' }}>
               <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>👤 Identité</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '700', color: text }}>{firstName} {lastName}, {age} ans</div>
                 {ville && <div style={{ fontSize: '12px', color: muted }}>📍 {ville}</div>}
                 <div style={{ fontSize: '12px', color: muted }}>✉️ {email}</div>
               </div>
             </div>
 
-            {/* Profils sélectionnés */}
             {selectedRoles.map(roleId => {
               const role = ROLES.find(r => r.id === roleId)!
               return (
@@ -742,34 +727,26 @@ export default function OnboardingPage() {
                   <div style={{ fontSize: '13px', fontWeight: '800', color: role.color, marginBottom: '10px' }}>{role.emoji} Profil {role.title}</div>
                   {roleId === 'talent' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {selectedSkills.length > 0 && (
+                      {selectedSkills.length > 0 ? (
                         <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '5px' }}>
                           {selectedSkills.map(s => (
                             <span key={s} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '20px', background: 'rgba(109,40,217,0.2)', color: '#A78BFA' }}>{s}</span>
                           ))}
                         </div>
-                      )}
-                      {selectedHours && (
-                        <div style={{ fontSize: '12px', color: muted }}>
-                          🕐 {HOURS.find(h => h.id === selectedHours)?.label}
-                        </div>
-                      )}
-                      {!selectedSkills.length && !selectedHours && (
-                        <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>
-                      )}
+                      ) : <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
+                      {selectedHours && <div style={{ fontSize: '12px', color: muted }}>🕐 {HOURS.find(h => h.id === selectedHours)?.label}</div>}
                     </div>
                   )}
                   {roleId === 'project' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {projectName && <div style={{ fontSize: '14px', fontWeight: '700', color: '#22D3EE' }}>🚀 {projectName}</div>}
-                      {projectStage && <div style={{ fontSize: '12px', color: muted }}>Stade : {PROJECT_STAGES.find(s => s.id === projectStage)?.label}</div>}
+                      {projectName ? <div style={{ fontSize: '14px', fontWeight: '700', color: '#22D3EE' }}>🚀 {projectName}</div> : null}
+                      {projectStage ? <div style={{ fontSize: '12px', color: muted }}>Stade : {PROJECT_STAGES.find(s => s.id === projectStage)?.label}</div> : null}
                       {!projectName && <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
                     </div>
                   )}
                   {roleId === 'investor' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {investorTicket && <div style={{ fontSize: '12px', color: muted }}>💰 {TICKETS.find(t => t.id === investorTicket)?.label}</div>}
-                      {!investorTicket && <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
+                      {investorTicket ? <div style={{ fontSize: '12px', color: muted }}>💰 {TICKETS.find(t => t.id === investorTicket)?.label}</div> : <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
                     </div>
                   )}
                 </div>
@@ -779,11 +756,10 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      {/* CTA */}
       <div style={{ padding: '12px 24px 28px', flexShrink: 0 }}>
         <button onClick={next} disabled={!canNext() || loading}
           style={{ width: '100%', padding: '16px', background: canNext() && !loading ? 'linear-gradient(135deg,#6D28D9,#0891B2)' : surface, border: canNext() && !loading ? 'none' : `1.5px solid ${cardBorder}`, borderRadius: '16px', color: canNext() && !loading ? 'white' : hint, fontSize: '15px', fontWeight: '800', cursor: canNext() && !loading ? 'pointer' : 'default', transition: 'all 0.2s', boxShadow: canNext() && !loading ? '0 8px 32px rgba(109,40,217,0.35)' : 'none' }}>
-          {ctaLabel()}
+          {loading ? '⏳ Création en cours...' : currentStepType === 'recap' ? 'Découvrir l\'app 🚀' : 'Continuer →'}
         </button>
       </div>
     </div>
