@@ -20,7 +20,7 @@ const ROLES = [
   },
   {
     id: 'investor', emoji: '💎', title: 'Investisseur',
-    desc: 'Accède aux pépites de demain avant tout le monde et fais fructifier ton capital',
+    desc: 'Accède aux pépites de demain avant tout le monde',
     gradient: 'linear-gradient(135deg, #B45309, #F59E0B)',
     glow: 'rgba(245,158,11,0.35)', bg: 'rgba(245,158,11,0.08)',
     border: 'rgba(245,158,11,0.35)', color: '#FCD34D',
@@ -28,68 +28,55 @@ const ROLES = [
 ]
 
 const ALL_SKILLS = [
-  'React', 'React Native', 'Next.js', 'Vue.js', 'Angular', 'Svelte', 'TypeScript',
-  'JavaScript', 'HTML', 'CSS', 'Tailwind CSS', 'Bootstrap', 'Sass',
-  'Node.js', 'Express.js', 'NestJS', 'PHP', 'Laravel', 'WordPress', 'Shopify', 'Webflow', 'Framer', 'Bubble',
-  'Ruby on Rails', 'Django', 'FastAPI', 'Flask', 'Spring Boot', 'Go', 'Rust',
-  'GraphQL', 'REST API', 'Flutter', 'Dart', 'Swift', 'SwiftUI', 'Kotlin', 'Expo', 'PWA',
-  'PostgreSQL', 'MySQL', 'MongoDB', 'Firebase', 'Supabase', 'Redis',
-  'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure', 'Vercel', 'Git', 'CI/CD',
-  'Machine Learning', 'Deep Learning', 'NLP', 'TensorFlow', 'PyTorch', 'OpenAI API',
-  'Prompt Engineering', 'Stable Diffusion', 'Midjourney', 'Agents IA', 'LangChain',
-  'Data Science', 'Data Analysis', 'Power BI', 'Tableau', 'SQL', 'Pandas', 'Excel avancé',
-  'n8n', 'Make', 'Zapier', 'Airtable', 'Notion', 'Retool', 'FlutterFlow', 'Adalo',
-  'Cybersécurité', 'Pentest', 'Bug Bounty', 'OSINT',
-  'Figma', 'Adobe XD', 'UI Design', 'UX Design', 'UX Research', 'Design System', 'Prototypage',
-  'Photoshop', 'Illustrator', 'InDesign', 'Branding', 'Logo design', 'Direction artistique',
-  'Canva', 'Affinity Designer', 'Packaging',
-  'After Effects', 'Premiere Pro', 'Final Cut Pro', 'DaVinci Resolve',
-  'Motion Design', 'Animation 2D', 'Animation 3D', 'CapCut', 'VFX', 'Color grading',
-  'Blender', 'Cinema 4D', 'Maya', 'ZBrush', 'SketchUp', 'AutoCAD', 'Impression 3D',
-  'AR', 'VR', 'Procreate', 'Illustration numérique', 'Pixel Art',
-  'Photographie', 'Retouche photo', 'Lightroom', 'Photographie portrait', 'Photographie produit',
-  'Photographie mode', 'Photographie mariage', 'Drone', 'Studio photo',
-  'Vidéographie', 'Montage vidéo', 'Réalisation', 'Storyboard', 'Scénarisation',
-  'Podcast production', 'YouTube production', 'TikTok production', 'Live streaming',
-  'Clip musical', 'Court métrage', 'Documentaire', 'UGC vidéo',
-  'Production musicale', 'Beatmaking', 'Composition', 'Arrangement',
-  'Ableton Live', 'FL Studio', 'Logic Pro', 'Pro Tools', 'Mixage audio', 'Mastering', 'Sound design',
-  'Guitare', 'Basse', 'Piano', 'Batterie', 'Violon', 'Saxophone', 'Chant', 'Rap', 'DJ',
-  'Copywriting', 'Rédaction web', 'Rédaction SEO', 'UX Writing', 'Storytelling',
-  'Journalisme', 'Newsletter', 'Ghostwriting', 'Traduction FR/EN', 'Traduction FR/ES',
-  'SEO', 'SEA', 'Google Ads', 'Facebook Ads', 'TikTok Ads', 'LinkedIn Ads',
-  'Email Marketing', 'Hubspot', 'Salesforce', 'Growth Hacking', 'A/B Testing', 'CRO',
-  'Affiliate Marketing', 'Influence Marketing', 'Google Analytics', 'Mixpanel',
-  'TikTok', 'Instagram', 'YouTube', 'LinkedIn', 'Twitter/X', 'Twitch', 'Discord',
-  'Community Management', 'Social Media Management', 'Création de contenu', 'UGC',
-  'Mannequin', 'Mannequin photo', 'Mannequin défilé', 'Mannequin vidéo', 'Mannequin e-commerce',
-  'Fitness model', 'Stylisme', 'Personal shopper',
-  'Maquillage', 'Maquillage artistique', 'Maquillage mariage', 'SFX makeup',
-  'Coiffure', 'Nail art', 'Manucure', 'Tatouage', 'Piercing',
-  'Couture', 'Création de vêtements', 'Patronage', 'Broderie', 'Tricot', 'Macramé',
-  'Coaching sportif', 'Personal training', 'Nutrition', 'Yoga', 'Pilates', 'Méditation',
-  'Sophrologie', 'Massage', 'Coaching de vie', 'PNL',
-  'Football', 'Basketball', 'Tennis', 'Natation', 'Boxe', 'MMA', 'Judo', 'Escalade',
-  'CrossFit', 'Musculation', 'Cyclisme', 'Running', 'Surf', 'Skateboard', 'Snowboard',
-  'Danse', 'Hip-hop', 'Contemporaine', 'Classique', 'Salsa', 'Bachata', 'Breakdance', 'Chorégraphie',
-  'Théâtre', 'Acting', 'Comédie', 'Improvisation', 'Stand-up', 'MC', 'Conférencier',
-  'Business Development', 'Sales', 'Commercial', 'Prospection B2B', 'Cold email', 'Négociation',
-  'Gestion de projet', 'Agile', 'Scrum', 'Product Management', 'Product Owner', 'OKR',
-  'Business Plan', 'Pitch deck', 'Fundraising', 'Finance startup', 'Comptabilité', 'RGPD',
-  'Leadership', 'Management', 'Recrutement',
-  'E-commerce', 'Dropshipping', 'Amazon FBA', 'Etsy', 'Vinted',
-  'Blockchain', 'Solidity', 'Smart Contracts', 'NFT', 'DeFi', 'Web3', 'Trading crypto',
-  'Unity', 'Unreal Engine', 'Game Design', 'QA Testing', 'Streaming gaming',
-  'Organisation événementiel', 'Wedding planner', 'Event manager',
-  'Cuisine', 'Pâtisserie', 'Barista', 'Mixologie',
-  'Tutorat', 'Cours particuliers', 'Maths', 'Physique', 'Anglais', 'Espagnol',
-  'Assistanat virtuel', 'Service client', 'Toilettage animal', 'Pet sitting',
-]
+  'Ableton Live', 'Acting', 'Adobe XD', 'After Effects', 'Agile', 'Airtable',
+  'Animation 2D', 'Animation 3D', 'Back-end', 'Barista', 'Beatmaking', 'Blockchain',
+  'Blender', 'Bootstrap', 'Branding', 'Bug Bounty', 'Business Development', 'Business Plan',
+  'Canva', 'CapCut', 'Chant', 'Chorégraphie', 'CI/CD', 'Cinema 4D', 'Coaching de vie',
+  'Coaching sportif', 'Cold email', 'Color grading', 'Community Management', 'Comptabilité',
+  'Copywriting', 'Couture', 'Création de contenu', 'CRO', 'CSS', 'Cuisine', 'Cybersécurité',
+  'DaVinci Resolve', 'Danse', 'Data Analysis', 'Data Science', 'Deep Learning', 'DeFi',
+  'Design System', 'DevOps', 'Direction artistique', 'Django', 'Docker', 'Drone', 'DJ',
+  'E-commerce', 'Email Marketing', 'Excel avancé', 'Expo',
+  'Facebook Ads', 'FastAPI', 'Figma', 'Final Cut Pro', 'Firebase', 'Fitness model',
+  'FL Studio', 'Flask', 'Flutter', 'Framer', 'Front-end', 'Fundraising',
+  'Game Design', 'Gestion de projet', 'Git', 'Go', 'Google Ads', 'Google Analytics',
+  'Google Cloud', 'GraphQL', 'Ghostwriting', 'Guitare',
+  'HTML', 'Hubspot', 'Hardware',
+  'Illustration numérique', 'InDesign', 'Influence Marketing', 'Instagram', 'IoT',
+  'JavaScript', 'Journalisme', 'Judo',
+  'Kotlin', 'Kubernetes',
+  'LangChain', 'Laravel', 'Leadership', 'Lightroom', 'LinkedIn', 'LinkedIn Ads',
+  'Live streaming', 'Logic Pro', 'Logo design',
+  'Machine Learning', 'Make', 'Management', 'Mannequin', 'Mannequin e-commerce',
+  'Mannequin mode', 'Mannequin photo', 'Marketing', 'Mastering', 'Massage', 'Maya',
+  'Méditation', 'Mixage audio', 'Mixologie', 'Mixpanel', 'MongoDB', 'Motion Design', 'MySQL',
+  'n8n', 'Nail art', 'NestJS', 'Newsletter', 'NFT', 'NLP', 'Node.js', 'Notion', 'Nutrition',
+  'OpenAI API', 'OSINT',
+  'Packaging', 'Pandas', 'Pentest', 'Personal shopper', 'Personal training',
+  'PHP', 'Photographie', 'Photographie mariage', 'Photographie mode', 'Photographie portrait',
+  'Photographie produit', 'Photoshop', 'Piano', 'Pilates', 'Pixel Art', 'PNL',
+  'Podcast production', 'PostgreSQL', 'Power BI', 'Premiere Pro', 'Procreate',
+  'Product Management', 'Product Owner', 'Pro Tools', 'Prompt Engineering',
+  'Prospection B2B', 'PWA', 'PyTorch', 'Python',
+  'QA Testing', 'Rap', 'React', 'React Native', 'Recrutement', 'Rédaction SEO',
+  'Rédaction web', 'Redis', 'REST API', 'Retool', 'Retouche photo', 'RGPD',
+  'Ruby on Rails', 'Running', 'Rust',
+  'Salesforce', 'Sales', 'Sass', 'Scrum', 'SEA', 'SEO', 'Service client', 'SFX makeup',
+  'Shopify', 'Smart Contracts', 'Social Media Management', 'Solidity', 'Sound design',
+  'Sophrologie', 'Spring Boot', 'SQL', 'Stable Diffusion', 'Stand-up', 'Storyboard',
+  'Storytelling', 'Studio photo', 'Supabase', 'Surf', 'Swift', 'SwiftUI',
+  'Tableau', 'Tailwind CSS', 'Tatouage', 'TensorFlow', 'Théâtre', 'TikTok', 'TikTok Ads',
+  'TikTok production', 'Trading crypto', 'Traduction FR/EN', 'Traduction FR/ES',
+  'TypeScript', 'Twitch',
+  'UI Design', 'Unity', 'Unreal Engine', 'UX Design', 'UX Research', 'UX Writing',
+  'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
+  'Web3', 'Webflow', 'WordPress',
+  'Yoga', 'YouTube', 'YouTube production', 'ZBrush', 'Zapier',
+].sort()
 
 const POPULAR_SKILLS = [
-  'React Native', 'Figma', 'TikTok', 'Photographie', 'Montage vidéo',
-  'Copywriting', 'Beatmaking', 'Mannequin', 'Danse', 'Motion Design',
-  'SEO', 'Growth Hacking', 'Illustration numérique', 'Couture',
+  'Beatmaking', 'Coaching sportif', 'Copywriting', 'Danse', 'Figma',
+  'Mannequin', 'Motion Design', 'Photographie', 'React Native', 'SEO', 'TikTok', 'YouTube production',
 ]
 
 const HOURS = [
@@ -114,6 +101,13 @@ const TICKETS = [
   { id: 'large', label: '100 000€+', desc: 'Lead investor · VC', emoji: '🏦' },
 ]
 
+const VILLES = [
+  'Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Toulouse', 'Nantes', 'Strasbourg',
+  'Lille', 'Nice', 'Montpellier', 'Rennes', 'Grenoble', 'Tours', 'Rouen',
+  'Aix-en-Provence', 'Dijon', 'Angers', 'Brest', 'Le Havre', 'Reims',
+  'Remote', 'International',
+]
+
 type PageMode = 'welcome' | 'signup' | 'login'
 type StepType = 'info' | 'roles' | 'talent' | 'project' | 'investor' | 'recap'
 
@@ -127,7 +121,7 @@ function buildSteps(roles: string[]): StepType[] {
 }
 
 function Checkbox({ active, color = '#6D28D9', glow = 'rgba(109,40,217,0.4)' }: {
-  active: boolean, color?: string, glow?: string
+  active: boolean; color?: string; glow?: string
 }) {
   return (
     <div style={{ width: 24, height: 24, borderRadius: '50%', border: `2px solid ${active ? color : 'rgba(255,255,255,0.2)'}`, background: active ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: active ? `0 4px 12px ${glow}` : 'none' }}>
@@ -137,33 +131,26 @@ function Checkbox({ active, color = '#6D28D9', glow = 'rgba(109,40,217,0.4)' }: 
 }
 
 function SkillsSelector({ selected, onAdd, onRemove }: {
-  selected: string[], onAdd: (s: string) => void, onRemove: (s: string) => void
+  selected: string[]; onAdd: (s: string) => void; onRemove: (s: string) => void
 }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const cardBorder = 'rgba(255,255,255,0.07)'
   const surface = '#1A1828'
   const card = '#111019'
   const text = '#F0EEFF'
   const muted = 'rgba(255,255,255,0.4)'
-  const hint = 'rgba(255,255,255,0.15)'
   const max = 5
   const full = selected.length >= max
-  const suggestions = query.length >= 1
-    ? ALL_SKILLS.filter(s => s.toLowerCase().includes(query.toLowerCase()) && !selected.includes(s)).slice(0, 7)
-    : []
 
-  function handleAdd(s: string) {
-    if (full) return
-    onAdd(s); setQuery(''); setOpen(false)
-  }
-  function handleCustom() {
-    const t = query.trim()
-    if (!t || selected.includes(t)) return
-    handleAdd(t)
-  }
+  const suggestions = query.length >= 1 ? [
+    ...ALL_SKILLS.filter(s => s.toLowerCase().startsWith(query.toLowerCase()) && !selected.includes(s)),
+    ...ALL_SKILLS.filter(s => !s.toLowerCase().startsWith(query.toLowerCase()) && s.toLowerCase().includes(query.toLowerCase()) && !selected.includes(s)),
+  ].slice(0, 7) : []
+
+  function handleAdd(s: string) { if (full) return; onAdd(s); setQuery(''); setOpen(false) }
+  function handleCustom() { const t = query.trim(); if (!t || selected.includes(t)) return; handleAdd(t) }
 
   return (
     <div>
@@ -183,11 +170,11 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
       </div>
       <div style={{ position: 'relative' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-          style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 1 }}>
+          style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
           <circle cx="11" cy="11" r="8" stroke={focused ? '#A78BFA' : muted} strokeWidth="2" />
           <path d="M21 21L16.65 16.65" stroke={focused ? '#A78BFA' : muted} strokeWidth="2" strokeLinecap="round" />
         </svg>
-        <input ref={inputRef} value={query}
+        <input value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => { setFocused(true); setOpen(true) }}
           onBlur={() => { setFocused(false); setTimeout(() => setOpen(false), 150) }}
@@ -195,7 +182,7 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
             if (e.key === 'Enter') { if (suggestions.length > 0) handleAdd(suggestions[0]); else if (query.trim()) handleCustom() }
             if (e.key === 'Escape') setOpen(false)
           }}
-          placeholder={full ? 'Maximum atteint ✓' : 'Recherche... (guitare, React, mannequinat, danse...)'}
+          placeholder={full ? 'Maximum atteint ✓' : 'Tape une lettre pour chercher...'}
           disabled={full}
           style={{ width: '100%', padding: '12px 14px 12px 36px', background: surface, border: `1.5px solid ${focused ? '#6D28D9' : cardBorder}`, borderRadius: '14px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, opacity: full ? 0.6 : 1, fontFamily: 'inherit', transition: 'border-color 0.2s' }}
         />
@@ -234,7 +221,7 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
       </div>
       {query.length === 0 && selected.length === 0 && (
         <div style={{ marginTop: '12px' }}>
-          <div style={{ fontSize: '10px', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Populaires</div>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.15)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Populaires</div>
           <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
             {POPULAR_SKILLS.map((s, i) => (
               <button key={i} onClick={() => handleAdd(s)}
@@ -260,6 +247,9 @@ export default function OnboardingPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [age, setAge] = useState('')
+  const [ville, setVille] = useState('')
+  const [villeQuery, setVilleQuery] = useState('')
+  const [villeOpen, setVilleOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
@@ -281,10 +271,6 @@ export default function OnboardingPage() {
   const steps = useMemo(() => buildSteps(selectedRoles), [selectedRoles])
   const totalSteps = steps.length
   const currentStepType = steps[step] || 'info'
-
-  const hasTalent = selectedRoles.includes('talent')
-  const hasProject = selectedRoles.includes('project')
-  const hasInvestor = selectedRoles.includes('investor')
   const primaryRole = ROLES.find(r => selectedRoles[0] === r.id) || ROLES[0]
 
   function toggleRole(id: string) {
@@ -292,7 +278,7 @@ export default function OnboardingPage() {
   }
 
   function canNext(): boolean {
-    if (currentStepType === 'info') return !!(firstName.trim() && lastName.trim() && age && email && password.length >= 8)
+    if (currentStepType === 'info') return !!(firstName.trim() && lastName.trim() && age && email && password.length >= 8 && ville)
     if (currentStepType === 'roles') return selectedRoles.length > 0
     return true
   }
@@ -308,57 +294,43 @@ export default function OnboardingPage() {
     else setPageMode('welcome')
   }
 
-  // ── INSCRIPTION RÉELLE SUPABASE ──
   async function finish() {
     setLoading(true)
     setError('')
     try {
-      // 1. Créer le compte auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { first_name: firstName, last_name: lastName }
-        }
+        email, password,
+        options: { data: { first_name: firstName, last_name: lastName } }
       })
       if (authError) throw authError
-
       const userId = authData.user?.id
       if (!userId) throw new Error('Erreur lors de la création du compte')
 
-      // 2. Mettre à jour le profil avec age
       await supabase.from('profiles').update({
         age: parseInt(age),
+        city: ville,
         active_mode: selectedRoles[0] || 'talent',
       }).eq('id', userId)
 
-      // 3. Insérer les modes choisis
       for (const role of selectedRoles) {
         await supabase.from('user_modes').insert({ user_id: userId, mode: role })
       }
 
-      // 4. Créer les profils selon les rôles
-      if (hasTalent) {
+      if (selectedRoles.includes('talent')) {
         await supabase.from('talent_profiles').insert({
-          user_id: userId,
-          skills: selectedSkills,
-          hours_per_week: selectedHours,
+          user_id: userId, skills: selectedSkills, hours_per_week: selectedHours,
         })
       }
-      if (hasProject) {
+      if (selectedRoles.includes('project')) {
         await supabase.from('project_profiles').insert({
-          user_id: userId,
-          project_name: projectName,
+          user_id: userId, project_name: projectName,
           stage: PROJECT_STAGES.find(s => s.id === projectStage)?.label || 'Idée',
         })
       }
-      if (hasInvestor) {
-        await supabase.from('investor_profiles').insert({
-          user_id: userId,
-        })
+      if (selectedRoles.includes('investor')) {
+        await supabase.from('investor_profiles').insert({ user_id: userId })
       }
 
-      // 5. Sauvegarder en localStorage pour l'UI
       localStorage.setItem('px_userModes', JSON.stringify(selectedRoles))
       localStorage.setItem('px_mode', selectedRoles[0] || 'talent')
       localStorage.setItem('px_firstName', firstName)
@@ -371,21 +343,17 @@ export default function OnboardingPage() {
     }
   }
 
-  // ── CONNEXION RÉELLE SUPABASE ──
   async function login() {
     setLoading(true)
     setError('')
     try {
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
+        email: loginEmail, password: loginPassword,
       })
       if (loginError) throw loginError
-
       const userId = data.user?.id
       if (!userId) throw new Error('Erreur de connexion')
 
-      // Récupérer le profil et les modes
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single()
       const { data: modes } = await supabase.from('user_modes').select('mode').eq('user_id', userId)
 
@@ -419,21 +387,17 @@ export default function OnboardingPage() {
     investor: { title: '💎 Ton profil Investisseur', sub: 'Pour matcher avec les projets qui t\'intéressent', accent: '#FCD34D' },
     recap: { title: 'C\'est parti !', sub: 'Ton profil est prêt 🎉' },
   }
-
   const current = stepTitles[currentStepType]
 
   function ctaLabel() {
-    if (loading) return '⏳ Chargement...'
+    if (loading) return '⏳ Création en cours...'
     if (currentStepType === 'recap') return 'Découvrir l\'app 🚀'
-    if (currentStepType === 'roles' && selectedRoles.length > 0) {
-      const nextStep = steps[step + 1]
-      if (nextStep === 'talent') return 'Configurer mon profil Talent →'
-      if (nextStep === 'project') return 'Configurer mon profil Projet →'
-      if (nextStep === 'investor') return 'Configurer mon profil Investisseur →'
-      if (nextStep === 'recap') return 'Voir le récap →'
-    }
     return 'Continuer →'
   }
+
+  const villeSuggestions = villeQuery.length >= 1
+    ? VILLES.filter(v => v.toLowerCase().startsWith(villeQuery.toLowerCase())).slice(0, 5)
+    : []
 
   // ── WELCOME ──
   if (pageMode === 'welcome') {
@@ -448,12 +412,12 @@ export default function OnboardingPage() {
           </div>
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '36px' }}>
             {[
-              { emoji: '⚡', title: 'Tu as un talent ?', text: 'Rejoins des projets ambitieux, gagne de l\'argent et construis ton réseau.' },
+              { emoji: '⚡', title: 'Tu as un talent ?', text: 'Rejoins des projets ambitieux et construis ton réseau.' },
               { emoji: '🚀', title: 'Tu as un projet ?', text: 'Trouve les talents qu\'il te faut et décroche tes premiers investisseurs.' },
-              { emoji: '💎', title: 'Tu veux investir ?', text: 'Découvre les pépites de demain avant tout le monde et fais fructifier ton capital.' },
+              { emoji: '💎', title: 'Tu veux investir ?', text: 'Découvre les pépites de demain avant tout le monde.' },
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '14px 16px', background: surface, borderRadius: '16px', border: `1px solid ${cardBorder}` }}>
-                <span style={{ fontSize: '22px', flexShrink: 0, marginTop: '1px' }}>{item.emoji}</span>
+                <span style={{ fontSize: '22px', flexShrink: 0 }}>{item.emoji}</span>
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: text, marginBottom: '2px' }}>{item.title}</div>
                   <div style={{ fontSize: '12px', color: muted, lineHeight: 1.4 }}>{item.text}</div>
@@ -471,7 +435,7 @@ export default function OnboardingPage() {
               J'ai déjà un compte
             </button>
           </div>
-          <div style={{ marginTop: '20px', fontSize: '11px', color: hint, textAlign: 'center', lineHeight: 1.6 }}>
+          <div style={{ marginTop: '20px', fontSize: '11px', color: hint, textAlign: 'center' }}>
             En continuant tu acceptes nos <span style={{ color: '#A78BFA', cursor: 'pointer' }}>CGU</span> et notre <span style={{ color: '#A78BFA', cursor: 'pointer' }}>politique de confidentialité</span>
           </div>
         </div>
@@ -547,12 +511,10 @@ export default function OnboardingPage() {
           <div style={{ fontSize: '12px', fontWeight: '600', color: muted, flexShrink: 0 }}>{step + 1}/{totalSteps}</div>
         </div>
         <div style={{ fontSize: '22px', fontWeight: '900', color: current.accent || text, marginBottom: '4px', letterSpacing: '-0.5px' }}>{current.title}</div>
-        <div style={{ fontSize: '13px', color: muted, lineHeight: 1.4 }}>{current.sub}</div>
+        <div style={{ fontSize: '13px', color: muted }}>{current.sub}</div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 24px 16px' }}>
-
-        {/* Erreur globale */}
         {error && (
           <div style={{ padding: '12px 16px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '12px', fontSize: '13px', color: '#F87171', marginBottom: '14px' }}>
             ⚠️ {error}
@@ -576,13 +538,38 @@ export default function OnboardingPage() {
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge</div>
-              <input type="number" min="16" max="99" value={age} onChange={e => setAge(e.target.value)} placeholder="22"
-                style={{ ...inputStyle, width: '120px' }}
-                onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
-                onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
-              <div style={{ fontSize: '11px', color: hint, marginTop: '6px' }}>Minimum 16 ans</div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge</div>
+                <input type="number" min="16" max="99" value={age} onChange={e => setAge(e.target.value)} placeholder="22"
+                  style={{ ...inputStyle }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
+                  onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
+              </div>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ville</div>
+                <input
+                  value={ville || villeQuery}
+                  onChange={e => { setVilleQuery(e.target.value); setVille(''); setVilleOpen(true) }}
+                  onFocus={() => setVilleOpen(true)}
+                  onBlur={() => setTimeout(() => setVilleOpen(false), 150)}
+                  placeholder="Paris..."
+                  style={{ ...inputStyle }}
+                  onFocus2={e => (e.currentTarget.style.borderColor = '#6D28D9')}
+                />
+                {villeOpen && villeSuggestions.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#111019', border: `1px solid ${cardBorder}`, borderRadius: '12px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+                    {villeSuggestions.map((v, i) => (
+                      <div key={i} onMouseDown={() => { setVille(v); setVilleQuery(v); setVilleOpen(false) }}
+                        style={{ padding: '11px 14px', cursor: 'pointer', fontSize: '13px', color: text, borderBottom: i < villeSuggestions.length - 1 ? `1px solid ${cardBorder}` : 'none' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(109,40,217,0.1)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        📍 {v}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</div>
@@ -595,18 +582,9 @@ export default function OnboardingPage() {
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="8 caractères minimum" style={inputStyle}
                 onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                 onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
-              <div style={{ flex: 1, height: 1, background: cardBorder }} />
-              <span style={{ fontSize: '11px', color: hint }}>ou</span>
-              <div style={{ flex: 1, height: 1, background: cardBorder }} />
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {[{ icon: '🍎', label: 'Apple' }, { icon: '🔵', label: 'Google' }].map(s => (
-                <button key={s.label} style={{ flex: 1, padding: '13px', background: surface, border: `1.5px solid ${cardBorder}`, borderRadius: '14px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: text, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '18px' }}>{s.icon}</span> {s.label}
-                </button>
-              ))}
+              {password.length > 0 && password.length < 8 && (
+                <div style={{ fontSize: '11px', color: '#F87171', marginTop: '6px' }}>⚠️ Minimum 8 caractères</div>
+              )}
             </div>
           </div>
         )}
@@ -627,11 +605,11 @@ export default function OnboardingPage() {
                   style={{ padding: '16px 18px', borderRadius: '20px', border: `2px solid ${active ? role.border : cardBorder}`, background: active ? role.bg : surface, cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }}>
                   {active && <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 15% 50%, ${role.glow.replace('0.35', '0.06')}, transparent 65%)`, pointerEvents: 'none' }} />}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative' }}>
-                    <div style={{ width: 46, height: 46, borderRadius: '13px', background: active ? role.gradient : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, transition: 'all 0.2s', boxShadow: active ? `0 8px 24px ${role.glow}` : 'none' }}>
+                    <div style={{ width: 46, height: 46, borderRadius: '13px', background: active ? role.gradient : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, boxShadow: active ? `0 8px 24px ${role.glow}` : 'none' }}>
                       {role.emoji}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '16px', fontWeight: '800', color: active ? role.color : text, marginBottom: '2px', transition: 'color 0.2s' }}>{role.title}</div>
+                      <div style={{ fontSize: '16px', fontWeight: '800', color: active ? role.color : text, marginBottom: '2px' }}>{role.title}</div>
                       <div style={{ fontSize: '12px', color: active ? 'rgba(255,255,255,0.65)' : muted }}>{role.desc}</div>
                     </div>
                     <Checkbox active={active} color={role.color} glow={role.glow} />
@@ -639,11 +617,6 @@ export default function OnboardingPage() {
                 </div>
               )
             })}
-            {selectedRoles.length >= 2 && (
-              <div style={{ padding: '10px 14px', background: 'rgba(74,222,128,0.06)', borderRadius: '12px', border: '1px solid rgba(74,222,128,0.15)', fontSize: '12px', color: '#4ADE80', textAlign: 'center' }}>
-                ✓ {selectedRoles.length} profils — on configurera chacun séparément
-              </div>
-            )}
           </div>
         )}
 
@@ -714,7 +687,7 @@ export default function OnboardingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
             <div style={{ padding: '14px 16px', background: 'rgba(245,158,11,0.06)', borderRadius: '14px', border: '1px solid rgba(245,158,11,0.15)' }}>
               <div style={{ fontSize: '13px', color: '#FCD34D', lineHeight: 1.5 }}>
-                💡 Ton ticket d'investissement rassure les fondateurs et te met en avant auprès des projets qui te correspondent.
+                💡 Ton ticket d'investissement rassure les fondateurs et te met en avant.
               </div>
             </div>
             <div>
@@ -741,47 +714,67 @@ export default function OnboardingPage() {
 
         {/* RECAP */}
         {currentStepType === 'recap' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '8px' }}>
-            <div style={{ position: 'relative', marginBottom: '20px' }}>
-              <div style={{ width: 84, height: 84, borderRadius: '50%', background: primaryRole.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '34px', boxShadow: `0 16px 48px ${primaryRole.glow}`, margin: '0 auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '4px' }}>
+            {/* Avatar */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: primaryRole.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '900', color: 'white', boxShadow: `0 16px 48px ${primaryRole.glow}`, marginBottom: '10px' }}>
                 {firstName ? firstName[0].toUpperCase() : '?'}
               </div>
-              <div style={{ position: 'absolute', bottom: 2, right: 2, width: 26, height: 26, borderRadius: '50%', background: '#4ADE80', border: '3px solid #08070F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>✓</div>
+              <div style={{ fontSize: '20px', fontWeight: '900', color: text, letterSpacing: '-0.5px' }}>Prêt, {firstName} ! 🎉</div>
+              <div style={{ fontSize: '12px', color: muted, marginTop: '4px' }}>Tu pourras compléter ton profil à tout moment ✦</div>
             </div>
-            <div style={{ fontSize: '22px', fontWeight: '900', color: text, marginBottom: '6px', letterSpacing: '-0.5px' }}>Prêt, {firstName || 'toi'} ! 🎉</div>
-            <div style={{ fontSize: '13px', color: muted, marginBottom: '24px', lineHeight: 1.6 }}>Ton profil va être créé. Dernière étape !</div>
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <div style={{ background: surface, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px 16px' }}>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Récapitulatif</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '14px' }}>👤</span>
-                    <span style={{ fontSize: '13px', color: text, fontWeight: '600' }}>{firstName} {lastName}, {age} ans</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
-                    {selectedRoles.map(r => {
-                      const role = ROLES.find(x => x.id === r)!
-                      return (
-                        <span key={r} style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: role.bg, color: role.color, fontWeight: '700', border: `1px solid ${role.border}` }}>
-                          {role.emoji} {role.title}
-                        </span>
-                      )
-                    })}
-                  </div>
-                  {selectedSkills.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '5px' }}>
-                      {selectedSkills.map(s => (
-                        <span key={s} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: 'rgba(109,40,217,0.15)', color: '#A78BFA', fontWeight: '600' }}>{s}</span>
-                      ))}
-                    </div>
-                  )}
-                  {projectName && <div style={{ fontSize: '13px', color: '#22D3EE', fontWeight: '700' }}>🚀 {projectName}</div>}
-                </div>
+
+            {/* Infos de base */}
+            <div style={{ background: surface, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px 16px' }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>👤 Identité</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: text }}>{firstName} {lastName}, {age} ans</div>
+                {ville && <div style={{ fontSize: '12px', color: muted }}>📍 {ville}</div>}
+                <div style={{ fontSize: '12px', color: muted }}>✉️ {email}</div>
               </div>
             </div>
-            <div style={{ fontSize: '11px', color: hint, lineHeight: 1.6, marginTop: '14px' }}>
-              Tu pourras compléter ton profil à tout moment ✦
-            </div>
+
+            {/* Profils sélectionnés */}
+            {selectedRoles.map(roleId => {
+              const role = ROLES.find(r => r.id === roleId)!
+              return (
+                <div key={roleId} style={{ background: role.bg, borderRadius: '16px', border: `1px solid ${role.border}`, padding: '14px 16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '800', color: role.color, marginBottom: '10px' }}>{role.emoji} Profil {role.title}</div>
+                  {roleId === 'talent' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {selectedSkills.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '5px' }}>
+                          {selectedSkills.map(s => (
+                            <span key={s} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '20px', background: 'rgba(109,40,217,0.2)', color: '#A78BFA' }}>{s}</span>
+                          ))}
+                        </div>
+                      )}
+                      {selectedHours && (
+                        <div style={{ fontSize: '12px', color: muted }}>
+                          🕐 {HOURS.find(h => h.id === selectedHours)?.label}
+                        </div>
+                      )}
+                      {!selectedSkills.length && !selectedHours && (
+                        <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>
+                      )}
+                    </div>
+                  )}
+                  {roleId === 'project' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {projectName && <div style={{ fontSize: '14px', fontWeight: '700', color: '#22D3EE' }}>🚀 {projectName}</div>}
+                      {projectStage && <div style={{ fontSize: '12px', color: muted }}>Stade : {PROJECT_STAGES.find(s => s.id === projectStage)?.label}</div>}
+                      {!projectName && <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
+                    </div>
+                  )}
+                  {roleId === 'investor' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {investorTicket && <div style={{ fontSize: '12px', color: muted }}>💰 {TICKETS.find(t => t.id === investorTicket)?.label}</div>}
+                      {!investorTicket && <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
