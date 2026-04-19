@@ -36,8 +36,8 @@ function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string
 
 export default function ChatPage() {
   const { activeMode, setActiveMode, userModes, activateMode, dark, setDark } = useMode()
-  const [userId, setUserId] = useState('')
-  const [showAll, setShowAll] = useState(true) // démarre sur "Tous"
+  const [currentUserId, setCurrentUserId] = useState('')
+  const [showAll, setShowAll] = useState(true)
   const [conversations, setConversations] = useState<any[]>([])
   const [activeConv, setActiveConv] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
@@ -50,6 +50,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const realtimeRef = useRef<any>(null)
+  const currentUserIdRef = useRef('')
 
   const bg = dark ? '#0D0C18' : '#F4F2FF'
   const card = dark ? '#16152A' : '#FFFFFF'
@@ -65,21 +66,23 @@ export default function ChatPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
-      setUserId(user.id)
+      setCurrentUserId(user.id)
+      currentUserIdRef.current = user.id
       await loadConversations(user.id)
     }
     init()
   }, [])
 
-  // Ouvrir automatiquement une conv si on arrive depuis le swipe
+  // Auto-ouvrir conv depuis URL ?match=
   useEffect(() => {
+    if (!conversations.length || !currentUserId) return
     const params = new URLSearchParams(window.location.search)
     const matchId = params.get('match')
-    if (matchId && conversations.length > 0) {
+    if (matchId) {
       const conv = conversations.find(c => c.matchId === matchId)
       if (conv) openConversation(conv)
     }
-  }, [conversations])
+  }, [conversations, currentUserId])
 
   async function loadConversations(uid: string) {
     setLoadingConvs(true)
@@ -96,24 +99,37 @@ export default function ChatPage() {
       }
 
       const enriched = await Promise.all(matchData.map(async (match: any) => {
-        const otherId = match.user1_id === uid ? match.user2_id : match.user1_id
+        const isUser1 = match.user1_id === uid
+        const otherId = isUser1 ? match.user2_id : match.user1_id
+
+        // Mode du CURRENT USER dans ce match
+        const myMode = isUser1 ? match.mode1 : match.mode2
+
         const { data: profile } = await supabase.from('profiles').select('id, first_name, last_name, avatar_url').eq('id', otherId).single()
-        const { data: lastMsgData } = await supabase.from('messages').select('content, created_at').eq('match_id', match.id).order('created_at', { ascending: false }).limit(1)
-        const { count: unreadCount } = await supabase.from('messages').select('*', { count: 'exact', head: true }).eq('match_id', match.id).neq('sender_id', uid).eq('seen', false)
+        const { data: lastMsgData } = await supabase.from('messages').select('content, created_at, sender_id').eq('match_id', match.id).order('created_at', { ascending: false }).limit(1)
+        
+        // Compter seulement les messages reçus (pas envoyés par moi) non lus
+        const { count: unreadCount } = await supabase.from('messages').select('*', { count: 'exact', head: true })
+          .eq('match_id', match.id)
+          .neq('sender_id', uid)
+          .eq('seen', false)
 
         const lastMsg = lastMsgData?.[0]
         const timeStr = lastMsg?.created_at ? new Date(lastMsg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''
+        const lastMsgIsMe = lastMsg?.sender_id === uid
 
         return {
           id: match.id, matchId: match.id, userId: otherId,
           firstName: profile?.first_name || 'Utilisateur',
           lastName: profile?.last_name || '',
           photo: profile?.avatar_url || `https://i.pravatar.cc/150?u=${otherId}`,
-          poste: match.mode2 || match.mode1 || '',
           lastMsg: lastMsg?.content || '',
-          time: timeStr, unread: unreadCount || 0, online: false,
+          lastMsgIsMe,
+          time: timeStr,
+          unread: unreadCount || 0,
+          online: false,
           score: Math.floor(Math.random() * 20) + 78,
-          mode1: match.mode1, mode2: match.mode2,
+          myMode, // mode du current user dans ce match
         }
       }))
       setConversations(enriched)
@@ -134,31 +150,52 @@ export default function ChatPage() {
     setMessages(msgs || [])
     setLoadingMsgs(false)
 
-    await supabase.from('messages').update({ seen: true }).eq('match_id', conv.matchId).neq('sender_id', userId)
+    // Marquer comme lus les messages reçus
+    await supabase.from('messages').update({ seen: true })
+      .eq('match_id', conv.matchId)
+      .neq('sender_id', currentUserIdRef.current)
+      .eq('seen', false)
 
     if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
     const channel = supabase.channel(`messages-${conv.matchId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${conv.matchId}` },
-        (payload: any) => setMessages(prev => [...prev, payload.new]))
+        (payload: any) => {
+          setMessages(prev => [...prev, payload.new])
+          // Marquer lu si message reçu
+          if (payload.new.sender_id !== currentUserIdRef.current) {
+            supabase.from('messages').update({ seen: true }).eq('id', payload.new.id)
+          }
+        })
       .subscribe()
     realtimeRef.current = channel
   }
 
   async function sendMessage(text?: string) {
     const content = text || input.trim()
-    if (!content || !activeConv) return
+    if (!content || !activeConv || !currentUserIdRef.current) return
 
-    const tempMsg = { id: Date.now().toString(), content, sender_id: userId, created_at: new Date().toISOString(), temp: true }
+    const tempMsg = {
+      id: `temp-${Date.now()}`,
+      content,
+      sender_id: currentUserIdRef.current,
+      created_at: new Date().toISOString(),
+      temp: true,
+    }
     setMessages(prev => [...prev, tempMsg])
     setInput('')
 
     setSending(true)
-    const { data, error } = await supabase.from('messages').insert({ match_id: activeConv.matchId, sender_id: userId, content }).select().single()
+    const { data, error } = await supabase.from('messages').insert({
+      match_id: activeConv.matchId,
+      sender_id: currentUserIdRef.current,
+      content,
+      seen: false,
+    }).select().single()
     if (!error && data) setMessages(prev => prev.map(m => m.id === tempMsg.id ? data : m))
     setSending(false)
 
     setConversations(prev => prev.map(c =>
-      c.id === activeConv.id ? { ...c, lastMsg: content, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) } : c
+      c.id === activeConv.id ? { ...c, lastMsg: content, lastMsgIsMe: true, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) } : c
     ))
   }
 
@@ -167,7 +204,8 @@ export default function ChatPage() {
 
   const filtered = conversations.filter(c => {
     const matchSearch = search === '' || `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase())
-    const matchMode = showAll || (c.mode1 === activeMode || c.mode2 === activeMode)
+    // Filtrage par mode : la conv apparaît dans la catégorie du mode avec lequel j'ai matché
+    const matchMode = showAll || c.myMode === activeMode
     return matchSearch && matchMode
   })
 
@@ -180,7 +218,9 @@ export default function ChatPage() {
 
   // ── VUE CONVERSATION ──
   if (activeConv) {
-    const isMe = (msg: any) => msg.sender_id === userId
+    // Utiliser le ref pour éviter les problèmes de closure
+    const isMe = (msg: any) => msg.sender_id === currentUserIdRef.current
+
     return (
       <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <div style={{ padding: '36px 16px 12px', background: card, borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
@@ -194,7 +234,7 @@ export default function ChatPage() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '14px', fontWeight: '700', color: text }}>{activeConv.firstName} {activeConv.lastName}</div>
-            <div style={{ fontSize: '10px', color: muted }}>● Match · {activeConv.score}% compatibilité</div>
+            <div style={{ fontSize: '10px', color: muted }}>{activeConv.score}% compatibilité</div>
           </div>
           <button onClick={() => window.location.href = `/profil/${activeConv.userId}`}
             style={{ padding: '6px 12px', background: cfg.accentBg, border: `1px solid ${cfg.accent}40`, borderRadius: '20px', color: cfg.accentLight, fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>
@@ -226,26 +266,32 @@ export default function ChatPage() {
               </div>
             </div>
           )}
-          {messages.map((msg: any) => (
-            <div key={msg.id} style={{ display: 'flex', justifyContent: isMe(msg) ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
-              {!isMe(msg) && <img src={activeConv.photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />}
-              <div style={{ maxWidth: '70%' }}>
-                <div style={{ padding: '11px 15px', borderRadius: isMe(msg) ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: isMe(msg) ? cfg.gradient : surface, color: isMe(msg) ? 'white' : text, fontSize: '12px', lineHeight: 1.55, opacity: msg.temp ? 0.7 : 1 }}>
-                  {msg.content}
-                </div>
-                <div style={{ fontSize: '9px', color: hint, marginTop: '4px', textAlign: isMe(msg) ? 'right' : 'left' }}>
-                  {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+
+          {messages.map((msg: any) => {
+            const mine = isMe(msg)
+            return (
+              <div key={msg.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
+                {!mine && <img src={activeConv.photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />}
+                <div style={{ maxWidth: '70%' }}>
+                  <div style={{ padding: '11px 15px', borderRadius: mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: mine ? cfg.gradient : surface, color: mine ? 'white' : text, fontSize: '12px', lineHeight: 1.55, opacity: msg.temp ? 0.7 : 1 }}>
+                    {msg.content}
+                  </div>
+                  <div style={{ fontSize: '9px', color: hint, marginTop: '4px', textAlign: mine ? 'right' : 'left' }}>
+                    {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    {mine && <span style={{ marginLeft: '4px' }}>{msg.seen ? ' ✓✓' : ' ✓'}</span>}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           <div ref={messagesEndRef} />
         </div>
 
         {showAttach && (
           <div style={{ background: card, borderTop: `1px solid ${cardBorder}`, padding: '14px 16px', display: 'flex', gap: '16px', justifyContent: 'center', flexShrink: 0 }}>
             {[{ icon: '📷', label: 'Photo' }, { icon: '📄', label: 'Fichier' }, { icon: '📊', label: 'Deck' }].map((item, i) => (
-              <div key={i} onClick={() => { sendMessage(`${item.icon} ${item.label} partagé`); setShowAttach(false) }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <div key={i} onClick={() => { sendMessage(`${item.icon} ${item.label} partagé`); setShowAttach(false) }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <div style={{ width: 50, height: 50, borderRadius: '15px', background: surface, border: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>{item.icon}</div>
                 <span style={{ fontSize: '9px', color: muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</span>
               </div>
@@ -258,12 +304,15 @@ export default function ChatPage() {
             style={{ width: 36, height: 36, borderRadius: '50%', background: showAttach ? cfg.accentBg : surface, border: `1px solid ${showAttach ? cfg.accent : cardBorder}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke={showAttach ? cfg.accentLight : muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <input value={input} onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendMessage()}
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder="Ton message..."
             style={{ flex: 1, padding: '10px 16px', background: surface, border: `1.5px solid ${cardBorder}`, borderRadius: '22px', color: text, fontSize: '12px', outline: 'none', fontFamily: 'inherit' }}
             onFocus={e => (e.currentTarget.style.borderColor = cfg.accent)}
-            onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
+            onBlur={e => (e.currentTarget.style.borderColor = cardBorder)}
+          />
           <button onClick={() => sendMessage()} disabled={sending || !input.trim()}
             style={{ width: 36, height: 36, borderRadius: '50%', background: input.trim() ? cfg.gradient : surface, border: 'none', cursor: input.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke={input.trim() ? 'white' : muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -288,7 +337,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Filtres */}
         <div style={{ display: 'flex', gap: '5px', marginBottom: '10px', overflowX: 'auto' }}>
           <button onClick={() => setShowAll(true)}
             style={{ padding: '4px 10px', borderRadius: '20px', border: `1px solid ${showAll ? cfg.accent : cardBorder}`, background: showAll ? cfg.accentBg : 'transparent', color: showAll ? cfg.accentLight : muted, fontSize: '10px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 }}>
@@ -299,10 +347,13 @@ export default function ChatPage() {
             const info = { talent: { emoji: '⚡', label: 'Talent' }, project: { emoji: '🚀', label: 'Projet' }, investor: { emoji: '💎', label: 'Invest' } }[modeId]
             const isActive = !showAll && activeMode === modeId
             const modeCfg = MODE_CONFIG[modeId]
+            // Compter les convs dans cette catégorie
+            const count = conversations.filter(c => c.myMode === modeId).length
             return (
               <button key={modeId} onClick={() => { setShowAll(false); setActiveMode(modeId) }}
-                style={{ padding: '4px 10px', borderRadius: '20px', border: `1px solid ${isActive ? modeCfg.accent : cardBorder}`, background: isActive ? modeCfg.accentBg : 'transparent', color: isActive ? modeCfg.accentLight : showAll ? hint : muted, fontSize: '10px', fontWeight: '600', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}>
+                style={{ padding: '4px 10px', borderRadius: '20px', border: `1px solid ${isActive ? modeCfg.accent : cardBorder}`, background: isActive ? modeCfg.accentBg : 'transparent', color: isActive ? modeCfg.accentLight : showAll ? hint : muted, fontSize: '10px', fontWeight: '600', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {info.emoji} {info.label}
+                {count > 0 && <span style={{ fontSize: '9px', background: isActive ? modeCfg.accent : 'rgba(255,255,255,0.1)', color: isActive ? 'white' : muted, borderRadius: '20px', padding: '1px 5px' }}>{count}</span>}
               </button>
             )
           })}
@@ -328,10 +379,10 @@ export default function ChatPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '14px' }}>💬</div>
             <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>
-              {conversations.length === 0 ? 'Pas encore de conversations' : 'Aucun résultat'}
+              {conversations.length === 0 ? 'Pas encore de conversations' : 'Aucun match dans cette catégorie'}
             </div>
             <div style={{ fontSize: '12px', color: muted, lineHeight: 1.6, marginBottom: '20px' }}>
-              {conversations.length === 0 ? 'Swipe des profils pour obtenir des matches !' : 'Essaie un autre filtre'}
+              {conversations.length === 0 ? 'Swipe des profils pour obtenir des matches !' : 'Change de filtre ou swipe en mode ' + activeMode}
             </div>
             {conversations.length === 0 && (
               <button onClick={() => window.location.href = '/swipe'} style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
@@ -341,10 +392,9 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            {/* Nouveaux matches en haut */}
             {filtered.some(c => !readConvs.has(c.id) && c.unread > 0) && (
               <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Nouveaux matches 🔥</div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Nouveaux messages 🔥</div>
                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '4px' }}>
                   {filtered.filter(c => !readConvs.has(c.id) && c.unread > 0).map(c => (
                     <div key={c.id} onClick={() => openConversation(c)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', cursor: 'pointer', flexShrink: 0 }}>
@@ -369,7 +419,6 @@ export default function ChatPage() {
                   onMouseLeave={e => (e.currentTarget.style.background = isNew ? (dark ? 'rgba(109,40,217,0.06)' : 'rgba(109,40,217,0.04)') : 'transparent')}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img src={c.photo} alt="" style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', border: isNew ? `2px solid ${cfg.accent}` : `1px solid ${cardBorder}` }} />
-                    {c.online && <div style={{ position: 'absolute', bottom: 1, right: 1, width: 12, height: 12, background: '#4ADE80', borderRadius: '50%', border: `2px solid ${bg}` }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
@@ -377,7 +426,9 @@ export default function ChatPage() {
                       <span style={{ fontSize: '10px', color: isNew ? cfg.accentLight : hint, fontWeight: isNew ? '600' : '400', flexShrink: 0, marginLeft: '6px' }}>{c.time}</span>
                     </div>
                     <div style={{ fontSize: '11px', color: isNew ? text : muted, fontWeight: isNew ? '500' : '400', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                      {c.lastMsg || <span style={{ color: cfg.accentLight, fontStyle: 'italic', fontWeight: '500' }}>🔥 Nouveau match — dis bonjour !</span>}
+                      {c.lastMsg
+                        ? <>{c.lastMsgIsMe && <span style={{ color: muted }}>Toi : </span>}{c.lastMsg}</>
+                        : <span style={{ color: cfg.accentLight, fontStyle: 'italic', fontWeight: '500' }}>🔥 Nouveau match — dis bonjour !</span>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px', flexShrink: 0 }}>
