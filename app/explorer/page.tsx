@@ -8,41 +8,30 @@ const MODE_CONFIG = {
   talent: {
     accent: '#6D28D9', accentLight: '#A78BFA', accentBg: 'rgba(109,40,217,0.1)',
     gradient: 'linear-gradient(135deg, #6D28D9, #8B5CF6)',
-    title: 'Explorer les projets', sub: 'Trouve le projet qui te correspond',
+    title: 'Explorer', sub: 'Recherche par nom, compétences ou secteur',
     ctaLabel: '♥ Je suis intéressé(e)',
   },
   project: {
     accent: '#0891B2', accentLight: '#22D3EE', accentBg: 'rgba(8,145,178,0.1)',
     gradient: 'linear-gradient(135deg, #0891B2, #06B6D4)',
-    title: 'Explorer les talents', sub: 'Trouve les profils qu\'il te faut',
+    title: 'Explorer', sub: 'Recherche des talents par compétence ou nom',
     ctaLabel: '♥ Proposer ma candidature',
   },
   investor: {
     accent: '#B45309', accentLight: '#FCD34D', accentBg: 'rgba(180,83,9,0.1)',
     gradient: 'linear-gradient(135deg, #B45309, #F59E0B)',
-    title: 'Explorer les projets', sub: 'Découvre les pépites avant tout le monde',
+    title: 'Explorer', sub: 'Recherche des projets par secteur ou fondateur',
     ctaLabel: '💎 Demander le pitch deck',
   },
 }
 
 const STAGES = ['Idée', 'Prototype', 'Lancé', 'Croissance']
 const COLLAB_MODES = ['Flash', 'Side', 'Equity']
+const STAGE_COLORS: Record<string, string> = {
+  'Idée': '#F97316', 'Prototype': '#8B5CF6', 'Lancé': '#4ADE80', 'Croissance': '#06B6D4'
+}
 
-// Demo fallback
-const DEMO_PROJECTS = [
-  { id: 'demo-1', user_id: 'demo-1', isProject: true, name: 'EcoTrack', founder: 'Lucas Bernard', founderPhoto: 'https://i.pravatar.cc/150?img=11', photo: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80', stage: 'Croissance', stageColor: '#06B6D4', sector: 'GreenTech', desc: 'SaaS B2B tracking carbone pour PME. 120 clients actifs. Série A en cours.', needs: ['Python', 'Figma', 'Data viz'], equity: '0.5–2%', budget: null, score: 96, modes: ['Side', 'Equity'], workMode: 'Remote', mrr: '18k€', team: 4, featured: true },
-  { id: 'demo-2', user_id: 'demo-2', isProject: true, name: 'Flio', founder: 'Marie Leconte', founderPhoto: 'https://i.pravatar.cc/150?img=44', photo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80', stage: 'Prototype', stageColor: '#8B5CF6', sector: 'PropTech', desc: 'Super app logement B2C — loyer, charges, voisinage.', needs: ['React Native', 'UX/UI', 'Marketing'], equity: '1–5%', budget: '500€/mois', score: 88, modes: ['Flash', 'Side', 'Equity'], workMode: 'Hybride', mrr: null, team: 2, featured: false },
-  { id: 'demo-3', user_id: 'demo-3', isProject: true, name: 'Foody', founder: 'Inès Rousseau', founderPhoto: 'https://i.pravatar.cc/150?img=25', photo: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80', stage: 'Lancé', stageColor: '#4ADE80', sector: 'FoodTech', desc: 'Box repas locaux en circuits courts. 800 abonnés IDF, rentable.', needs: ['Growth', 'Logistique', 'Social Media'], equity: '0–2%', budget: '800€/mois', score: 92, modes: ['Flash', 'Side', 'Equity'], workMode: 'Paris', mrr: '12k€', team: 3, featured: false },
-  { id: 'demo-4', user_id: 'demo-4', isProject: true, name: 'MindFlow', founder: 'Théo Garnier', founderPhoto: 'https://i.pravatar.cc/150?img=15', photo: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&q=80', stage: 'Idée', stageColor: '#F97316', sector: 'HealthTech', desc: 'Chatbot thérapeutique IA pour jeunes en souffrance psychologique.', needs: ['NLP/IA', 'Fullstack'], equity: '3–8%', budget: null, score: 79, modes: ['Equity'], workMode: 'Remote', mrr: null, team: 1, featured: false },
-]
-
-const DEMO_TALENTS = [
-  { id: 'demo-5', user_id: 'demo-5', isProject: false, firstName: 'Sofia', lastName: 'Amrani', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80', poste: 'Développeuse Full-stack', city: 'Paris', age: 24, score: 94, online: true, bio: 'Apps mobiles rapides et belles. Passionnée par les projets à impact social.', skills: ['React Native', 'TypeScript', 'Supabase'], modes: ['Flash', 'Side', 'Equity'], hours: '20–35h/sem', featured: true },
-  { id: 'demo-6', user_id: 'demo-6', isProject: false, firstName: 'Jade', lastName: 'Kim', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80', poste: 'Growth Marketer', city: 'Remote', age: 22, score: 91, online: true, bio: 'Growth hacker IA. J\'automatise l\'acquisition avec n8n.', skills: ['SEO/SEA', 'n8n', 'Copywriting'], modes: ['Flash', 'Side'], hours: '10–20h/sem', featured: false },
-  { id: 'demo-7', user_id: 'demo-7', isProject: false, firstName: 'Camille', lastName: 'Dubois', photo: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80', poste: 'UX/UI Designer', city: 'Nantes', age: 23, score: 96, online: false, bio: 'Designer produit obsédée par l\'UX. Ex-freelance SNCF.', skills: ['Figma', 'Framer', 'Design System'], modes: ['Flash', 'Side', 'Equity'], hours: '10–20h/sem', featured: false },
-]
-
-function ModeSelector({ muted, cardBorder }: { muted: string, cardBorder: string }) {
+function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string }) {
   const { activeMode, setActiveMode, userModes, activateMode } = useMode()
   const modes = [
     { id: 'talent' as Mode, emoji: '⚡', label: 'Talent' },
@@ -70,12 +59,13 @@ export default function ExplorerPage() {
   const { activeMode, userModes, activateMode, dark, setDark } = useMode()
   const [userId, setUserId] = useState('')
   const [items, setItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [filterStage, setFilterStage] = useState<string[]>([])
   const [filterMode, setFilterMode] = useState<string[]>([])
   const [selected, setSelected] = useState<any>(null)
+  const [sendingMsg, setSendingMsg] = useState(false)
 
   const bg = dark ? '#08070F' : '#F4F2FF'
   const card = dark ? '#111019' : '#FFFFFF'
@@ -95,116 +85,116 @@ export default function ExplorerPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
       setUserId(user.id)
-      await loadItems(user.id)
     }
     init()
-  }, [activeMode])
+  }, [])
 
-  async function loadItems(uid: string) {
+  // Charger seulement quand on tape
+  useEffect(() => {
+    if (!userId) return
+    if (search.trim().length < 2 && filterStage.length === 0 && filterMode.length === 0) {
+      setItems([])
+      return
+    }
+    const timeout = setTimeout(() => loadItems(), 300)
+    return () => clearTimeout(timeout)
+  }, [search, filterStage, filterMode, activeMode, userId])
+
+  async function loadItems() {
+    if (!userId) return
     setLoading(true)
     try {
       if (isProjectMode) {
-        // Project mode → see talents
-        const { data: talentData } = await supabase
-          .from('talent_profiles')
-          .select('*')
-          .neq('user_id', uid)
-
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, age, city, avatar_url')
-          .neq('id', uid)
+        const { data: talentData } = await supabase.from('talent_profiles').select('*').neq('user_id', userId)
+        const { data: profileData } = await supabase.from('profiles').select('id, first_name, last_name, age, city, avatar_url').neq('id', userId)
 
         const merged = (talentData || []).map((t, i) => {
           const p = profileData?.find(pr => pr.id === t.user_id)
           return {
-            id: t.id,
-            user_id: t.user_id,
-            isProject: false,
-            firstName: p?.first_name || 'Utilisateur',
-            lastName: p?.last_name || '',
+            id: t.id, user_id: t.user_id, isProject: false,
+            firstName: p?.first_name || 'Utilisateur', lastName: p?.last_name || '',
             photo: p?.avatar_url || `https://i.pravatar.cc/150?u=${t.user_id}`,
-            poste: t.statut || 'Talent',
-            city: p?.city || 'France',
-            age: p?.age || null,
+            poste: t.statut || 'Talent', city: p?.city || '', age: p?.age || null,
             score: Math.floor(Math.random() * 20) + 78,
-            online: Math.random() > 0.5,
-            bio: t.bio || 'Profil en cours de création...',
-            skills: t.skills || [],
-            modes: t.collab_modes || [],
+            bio: t.bio || '', skills: t.skills || [], modes: t.collab_modes || [],
             hours: t.hours_per_week || '',
-            featured: i === 0,
           }
         })
-        setItems(merged.length > 0 ? merged : DEMO_TALENTS)
+        setItems(merged)
       } else {
-        // Talent / Investor mode → see projects
-        const { data: projectData } = await supabase
-          .from('project_profiles')
-          .select('*')
-          .neq('user_id', uid)
-
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, avatar_url')
-          .neq('id', uid)
-
-        const STAGE_COLORS: Record<string, string> = {
-          'Idée': '#F97316', 'Prototype': '#8B5CF6', 'Lancé': '#4ADE80', 'Croissance': '#06B6D4', 'Série A+': '#22D3EE'
-        }
+        const { data: projectData } = await supabase.from('project_profiles').select('*').neq('user_id', userId)
+        const { data: profileData } = await supabase.from('profiles').select('id, first_name, last_name, avatar_url').neq('id', userId)
 
         const merged = (projectData || []).map((p, i) => {
           const profile = profileData?.find(pr => pr.id === p.user_id)
           return {
-            id: p.id,
-            user_id: p.user_id,
-            isProject: true,
+            id: p.id, user_id: p.user_id, isProject: true,
             name: p.project_name || 'Projet sans nom',
             founder: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Fondateur',
             founderPhoto: profile?.avatar_url || `https://i.pravatar.cc/100?u=${p.user_id}`,
-            photo: `https://images.unsplash.com/photo-155780450${i % 9}?w=600&q=80`,
-            stage: p.stage || 'Idée',
-            stageColor: STAGE_COLORS[p.stage] || '#A78BFA',
+            photo: `https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80`,
+            stage: p.stage || 'Idée', stageColor: STAGE_COLORS[p.stage] || '#A78BFA',
             sector: p.sectors?.[0] || 'Tech',
-            desc: p.description || p.founder_bio || 'Description en cours...',
-            needs: p.needs || [],
-            equity: p.equity || '',
-            budget: p.budget || null,
+            desc: p.description || p.founder_bio || '',
+            needs: p.needs || [], equity: p.equity || '', budget: p.budget || null,
             score: Math.floor(Math.random() * 20) + 78,
-            modes: p.collab_modes || [],
-            workMode: p.work_mode || 'Remote',
-            mrr: null,
+            modes: p.collab_modes || [], workMode: p.work_mode || 'Remote',
             team: p.team_size || 1,
-            featured: i === 0,
           }
         })
-        setItems(merged.length > 0 ? merged : DEMO_PROJECTS)
+        setItems(merged)
       }
-    } catch (e) {
-      console.error(e)
-      setItems(isProjectMode ? DEMO_TALENTS : DEMO_PROJECTS)
-    }
+    } catch (e) { console.error(e) }
     setLoading(false)
   }
 
   const filtered = items.filter((item: any) => {
     const q = search.toLowerCase()
-const matchSearch = q === '' || (
-  item.isProject
-    ? `${item.name || ''} ${item.sector || ''} ${item.founder || ''} ${(item.needs || []).join(' ')}`.toLowerCase().includes(q)
-    : `${item.firstName || ''} ${item.lastName || ''} ${item.poste || ''} ${(item.skills || []).join(' ')}`.toLowerCase().includes(q)
-)
+    const matchSearch = q.length < 2 || (
+      item.isProject
+        ? `${item.name || ''} ${item.sector || ''} ${item.founder || ''} ${(item.needs || []).join(' ')}`.toLowerCase().includes(q)
+        : `${item.firstName || ''} ${item.lastName || ''} ${item.poste || ''} ${(item.skills || []).join(' ')}`.toLowerCase().includes(q)
+    )
     const matchStage = filterStage.length === 0 || (item.isProject && filterStage.includes(item.stage))
     const matchMode = filterMode.length === 0 || item.modes?.some((m: string) => filterMode.includes(m))
     return matchSearch && matchStage && matchMode
   })
 
+  async function handleContact(item: any) {
+    if (!userId || !item.user_id || sendingMsg) return
+    setSendingMsg(true)
+    try {
+      // Chercher un match existant
+      const { data: existing } = await supabase
+        .from('matches').select('id')
+        .or(`and(user1_id.eq.${userId},user2_id.eq.${item.user_id}),and(user1_id.eq.${item.user_id},user2_id.eq.${userId})`)
+        .single()
+
+      let matchId = existing?.id
+
+      if (!matchId) {
+        // Créer le match
+        const { data: newMatch } = await supabase.from('matches').insert({
+          user1_id: userId,
+          user2_id: item.user_id,
+          mode1: activeMode,
+          mode2: activeMode,
+        }).select().single()
+        matchId = newMatch?.id
+      }
+
+      window.location.href = matchId ? `/chat?match=${matchId}` : '/chat'
+    } catch (e) {
+      console.error(e)
+      window.location.href = '/chat'
+    }
+    setSendingMsg(false)
+  }
+
   const navItems = [
-    { id: 'home', label: 'Accueil', href: '/home' },
-    { id: 'chat', label: 'Chat', href: '/chat' },
-    { id: 'swipe', href: '/swipe' },
-    { id: 'explorer', label: 'Explorer', href: '/explorer', active: true },
-    { id: 'profil', label: 'Profil', href: '/profil' },
+    { id: 'home', href: '/home' }, { id: 'chat', href: '/chat' },
+    { id: 'swipe', href: '/swipe' }, { id: 'explorer', href: '/explorer', active: true },
+    { id: 'profil', href: '/profil' },
   ]
 
   // ── DETAIL VIEW ──
@@ -225,7 +215,7 @@ const matchSearch = q === '' || (
           <div style={{ position: 'absolute', bottom: 14, left: 16, right: 80 }}>
             {selected.isProject ? (
               <>
-                <div style={{ fontSize: '22px', fontWeight: '900', color: 'white', letterSpacing: '-0.5px' }}>{selected.name}</div>
+                <div style={{ fontSize: '22px', fontWeight: '900', color: 'white' }}>{selected.name}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                   <img src={selected.founderPhoto} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.5)' }} />
                   <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>par {selected.founder}</span>
@@ -242,52 +232,50 @@ const matchSearch = q === '' || (
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-          {/* Badges */}
+          {/* Tags */}
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '14px' }}>
             {selected.isProject && (
               <>
                 <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(6,182,212,0.1)', color: '#22D3EE', border: '1px solid rgba(6,182,212,0.2)' }}>{selected.sector}</span>
                 <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: surface, color: muted, border: `1px solid ${cardBorder}` }}>🌐 {selected.workMode}</span>
-                {selected.mrr && <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(74,222,128,0.1)', color: '#4ADE80', border: '1px solid rgba(74,222,128,0.2)' }}>📈 {selected.mrr} MRR</span>}
               </>
             )}
-            {!selected.isProject && selected.modes?.map((m: string) => (
-              <span key={m} style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: cfg.accentBg, color: cfg.accentLight, border: `1px solid ${cfg.accent}40` }}>
-                {m === 'Flash' ? '⚡' : m === 'Side' ? '🚀' : '💎'} {m}
-              </span>
-            ))}
           </div>
 
           {/* Description */}
-          <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
-            <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>
-              {selected.isProject ? 'À propos du projet' : 'Bio'}
+          {(selected.desc || selected.bio) && (
+            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>
+                {selected.isProject ? 'À propos du projet' : 'Bio'}
+              </div>
+              <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>
+                {selected.isProject ? selected.desc : selected.bio}
+              </div>
             </div>
-            <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>
-              {selected.isProject ? selected.desc : selected.bio}
-            </div>
-          </div>
+          )}
 
           {/* Skills / Needs */}
-          <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
-            <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>
-              {selected.isProject ? 'Ils recherchent' : 'Compétences'}
+          {(selected.isProject ? selected.needs : selected.skills)?.length > 0 && (
+            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>
+                {selected.isProject ? 'Ils recherchent' : 'Compétences'}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+                {(selected.isProject ? selected.needs : selected.skills).map((s: string, i: number) => (
+                  <span key={i} style={{ fontSize: '12px', fontWeight: '600', padding: '5px 12px', borderRadius: '20px', background: cfg.accentBg, color: cfg.accentLight, border: `1px solid ${cfg.accent}30` }}>{s}</span>
+                ))}
+              </div>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
-              {(selected.isProject ? selected.needs : selected.skills)?.map((s: string, i: number) => (
-                <span key={i} style={{ fontSize: '12px', fontWeight: '600', padding: '5px 12px', borderRadius: '20px', background: cfg.accentBg, color: cfg.accentLight, border: `1px solid ${cfg.accent}30` }}>{s}</span>
-              ))}
-            </div>
-          </div>
+          )}
 
-          {/* Project financials */}
-          {selected.isProject && (
+          {/* Financials projet */}
+          {selected.isProject && (selected.equity || selected.budget || selected.team) && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
               {[
-                { label: 'Equity', value: selected.equity || 'N/A', color: '#4ADE80' },
+                { label: 'Equity', value: selected.equity || '—', color: '#4ADE80' },
                 { label: 'Budget/mois', value: selected.budget || '—', color: '#F97316' },
                 { label: 'Équipe', value: `${selected.team} pers.`, color: cfg.accentLight },
-                { label: 'Collab', value: selected.modes?.join(', ') || '—', color: muted },
+                { label: 'Mode', value: selected.workMode, color: muted },
               ].map((item, i) => (
                 <div key={i} style={{ background: card, borderRadius: '14px', border: `1px solid ${cardBorder}`, padding: '12px 14px' }}>
                   <div style={{ fontSize: '9px', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '5px' }}>{item.label}</div>
@@ -297,8 +285,8 @@ const matchSearch = q === '' || (
             </div>
           )}
 
-          {/* Talent availability */}
-          {!selected.isProject && (
+          {/* Dispo talent */}
+          {!selected.isProject && (selected.hours || selected.modes?.length > 0) && (
             <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
               <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Disponibilité</div>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
@@ -312,27 +300,17 @@ const matchSearch = q === '' || (
             </div>
           )}
 
-          {/* Investor analysis */}
-          {activeMode === 'investor' && selected.isProject && (
-            <div style={{ background: 'rgba(74,222,128,0.05)', borderRadius: '16px', border: '1px solid rgba(74,222,128,0.15)', padding: '14px', marginBottom: '10px' }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: 'rgba(74,222,128,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Analyse IA Investisseur</div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-                {selected.stage === 'Croissance' && '🚀 Forte traction — ticket de croissance conseillé.'}
-                {selected.stage === 'Lancé' && '📊 Produit live avec preuves marché. Stade idéal pour un ticket seed.'}
-                {selected.stage === 'Prototype' && '🔬 Early seed — miser sur l\'équipe avant le produit.'}
-                {selected.stage === 'Idée' && '💡 Pré-seed. Risque maximal, upside potentiellement exceptionnel.'}
-              </div>
-            </div>
-          )}
-
           <div style={{ height: 8 }} />
         </div>
 
         {/* CTA */}
         <div style={{ padding: '12px 16px 24px', flexShrink: 0 }}>
-          <button onClick={() => window.location.href = '/chat'}
-            style={{ width: '100%', padding: '16px', background: cfg.gradient, border: 'none', borderRadius: '16px', color: 'white', fontSize: '15px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 8px 32px ${cfg.accent}40` }}>
-            {cfg.ctaLabel}
+          <button
+            onClick={() => handleContact(selected)}
+            disabled={sendingMsg}
+            style={{ width: '100%', padding: '16px', background: sendingMsg ? surface : cfg.gradient, border: 'none', borderRadius: '16px', color: sendingMsg ? muted : 'white', fontSize: '15px', fontWeight: '800', cursor: sendingMsg ? 'default' : 'pointer', boxShadow: sendingMsg ? 'none' : `0 8px 32px ${cfg.accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="white" strokeWidth="2" /></svg>
+            {sendingMsg ? 'Ouverture...' : 'Envoyer un message'}
           </button>
         </div>
       </div>
@@ -342,6 +320,8 @@ const matchSearch = q === '' || (
   // ── LIST VIEW ──
   return (
     <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow: 'hidden', transition: 'background 0.3s' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
       <div style={{ padding: '44px 20px 10px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <div>
@@ -359,20 +339,24 @@ const matchSearch = q === '' || (
       <div style={{ padding: '8px 20px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
           <div style={{ flex: 1, position: 'relative' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <circle cx="11" cy="11" r="8" stroke={muted} strokeWidth="2" />
               <path d="M21 21L16.65 16.65" stroke={muted} strokeWidth="2" strokeLinecap="round" />
             </svg>
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder={isProjectMode ? 'Rechercher un talent...' : 'Rechercher un projet...'}
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={isProjectMode ? 'Nom, compétence...' : 'Nom, secteur, projet...'}
               style={{ width: '100%', padding: '11px 14px 11px 36px', background: card, border: `1.5px solid ${cardBorder}`, borderRadius: '14px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
               onFocus={e => (e.currentTarget.style.borderColor = cfg.accent)}
-              onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
+              onBlur={e => (e.currentTarget.style.borderColor = cardBorder)}
+            />
           </div>
           <button onClick={() => setShowFilters(!showFilters)}
             style={{ padding: '11px 14px', background: showFilters ? cfg.accentBg : card, border: `1.5px solid ${showFilters ? cfg.accent : cardBorder}`, borderRadius: '14px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: showFilters ? cfg.accentLight : muted, display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, transition: 'all 0.15s' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            Filtres {(filterStage.length + filterMode.length) > 0 && (
+            {(filterStage.length + filterMode.length) > 0 && (
               <span style={{ background: cfg.accent, color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: '9px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {filterStage.length + filterMode.length}
               </span>
@@ -416,98 +400,107 @@ const matchSearch = q === '' || (
             {(filterStage.length + filterMode.length) > 0 && (
               <button onClick={() => { setFilterStage([]); setFilterMode([]) }}
                 style={{ marginTop: '10px', background: 'none', border: 'none', color: '#F87171', fontSize: '11px', cursor: 'pointer', fontWeight: '600', padding: 0 }}>
-                × Réinitialiser
+                × Réinitialiser les filtres
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* List */}
+      {/* Contenu */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 8px' }}>
         {!hasMode ? (
           <div style={{ background: card, borderRadius: '20px', border: `1px solid rgba(109,40,217,0.2)`, padding: '28px 20px', textAlign: 'center', margin: '8px 0' }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>{activeMode === 'talent' ? '⚡' : activeMode === 'project' ? '🚀' : '💎'}</div>
             <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>Profil non créé</div>
-            <div style={{ fontSize: '13px', color: muted, marginBottom: '18px' }}>Active ce profil pour voir les recommandations.</div>
+            <div style={{ fontSize: '13px', color: muted, marginBottom: '18px' }}>Active ce profil pour explorer.</div>
             <button onClick={() => activateMode(activeMode)} style={{ width: '100%', padding: '13px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
               Créer mon profil
             </button>
           </div>
+
+        ) : search.trim().length < 2 && filterStage.length === 0 && filterMode.length === 0 ? (
+          // État par défaut — invite à chercher
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+            <div style={{ fontSize: '16px', fontWeight: '800', color: text, marginBottom: '8px' }}>Recherche un profil</div>
+            <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6, marginBottom: '24px' }}>
+              {isProjectMode
+                ? 'Tape un prénom, une compétence ou un statut pour trouver des talents.'
+                : 'Tape un nom de projet, un secteur ou un fondateur.'}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
+              {(isProjectMode
+                ? ['Figma', 'React', 'Marketing', 'TikTok', 'Beatmaking']
+                : ['GreenTech', 'SaaS', 'FinTech', 'EdTech', 'HealthTech']
+              ).map(tag => (
+                <button key={tag} onClick={() => setSearch(tag)}
+                  style={{ padding: '8px 16px', background: cfg.accentBg, border: `1px solid ${cfg.accent}30`, borderRadius: '20px', color: cfg.accentLight, fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
         ) : loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px' }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${cfg.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
+
         ) : filtered.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</div>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>😕</div>
             <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>Aucun résultat</div>
-            <div style={{ fontSize: '12px', color: muted }}>Essaie d'autres filtres ou reviens plus tard</div>
+            <div style={{ fontSize: '12px', color: muted }}>Essaie un autre mot-clé</div>
           </div>
+
         ) : (
           <>
             <div style={{ fontSize: '11px', color: hint, marginBottom: '10px', paddingLeft: '2px' }}>
-              {filtered.length} {isProjectMode ? 'talent' : 'projet'}{filtered.length > 1 ? 's' : ''}
+              {filtered.length} résultat{filtered.length > 1 ? 's' : ''} pour "{search}"
             </div>
-            {filtered.map((item: any, i: number) => {
-              const isFeatured = item.featured
-              return (
-                <div key={item.id} onClick={() => setSelected(item)}
-                  style={{ marginBottom: '10px', borderRadius: '20px', overflow: 'hidden', border: `1.5px solid ${isFeatured ? cfg.accent + '50' : cardBorder}`, background: card, cursor: 'pointer', transition: 'all 0.15s', boxShadow: isFeatured ? `0 8px 32px ${cfg.accent}20` : 'none' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = cfg.accent + '60')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = isFeatured ? cfg.accent + '50' : cardBorder)}>
-
-                  {isFeatured && (
-                    <div style={{ background: cfg.gradient, padding: '5px 14px', fontSize: '10px', fontWeight: '700', color: 'white', letterSpacing: '0.04em' }}>
-                      ⭐ Meilleur match pour toi
+            {filtered.map((item: any) => (
+              <div key={item.id} onClick={() => setSelected(item)}
+                style={{ marginBottom: '10px', borderRadius: '20px', overflow: 'hidden', border: `1.5px solid ${cardBorder}`, background: card, cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = cfg.accent + '60')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = cardBorder)}>
+                <div style={{ padding: '14px' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <img
+                        src={item.isProject ? item.founderPhoto : item.photo}
+                        alt=""
+                        style={{ width: 54, height: 54, borderRadius: item.isProject ? '14px' : '50%', objectFit: 'cover', border: `1.5px solid ${cardBorder}` }}
+                      />
                     </div>
-                  )}
-
-                  <div style={{ padding: '14px' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <img src={item.isProject ? item.founderPhoto : item.photo} alt=""
-                          style={{ width: 54, height: 54, borderRadius: item.isProject ? '14px' : '50%', objectFit: 'cover', border: `1.5px solid ${cardBorder}` }} />
-                        {!item.isProject && item.online !== undefined && (
-                          <div style={{ position: 'absolute', bottom: 2, right: 2, width: 12, height: 12, background: item.online ? '#4ADE80' : 'rgba(255,255,255,0.2)', borderRadius: '50%', border: `2px solid ${card}` }} />
-                        )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '2px' }}>
+                        <div style={{ fontSize: '15px', fontWeight: '800', color: text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                          {item.isProject ? item.name : `${item.firstName} ${item.lastName}`}
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: '900', color: item.score >= 90 ? '#F97316' : cfg.accentLight, flexShrink: 0 }}>{item.score}%</div>
                       </div>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '2px' }}>
-                          <div style={{ fontSize: '15px', fontWeight: '800', color: text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                            {item.isProject ? item.name : `${item.firstName} ${item.lastName}`}
-                          </div>
-                          <div style={{ fontSize: '14px', fontWeight: '900', color: item.score >= 90 ? '#F97316' : cfg.accentLight, flexShrink: 0 }}>{item.score}%</div>
+                      {item.isProject ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '11px', color: muted }}>{item.founder}</span>
+                          <span style={{ fontSize: '10px', fontWeight: '600', padding: '1px 7px', borderRadius: '20px', background: (item.stageColor || '#A78BFA') + '25', color: item.stageColor || '#A78BFA' }}>{item.stage}</span>
+                          <span style={{ fontSize: '10px', color: muted }}>· {item.sector}</span>
                         </div>
-
-                        {item.isProject ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '11px', color: muted }}>{item.founder}</span>
-                            <span style={{ fontSize: '10px', fontWeight: '600', padding: '1px 7px', borderRadius: '20px', background: (item.stageColor || '#A78BFA') + '25', color: item.stageColor || '#A78BFA' }}>{item.stage}</span>
-                            {item.mrr && <span style={{ fontSize: '10px', fontWeight: '600', padding: '1px 7px', borderRadius: '20px', background: 'rgba(74,222,128,0.1)', color: '#4ADE80' }}>📈 {item.mrr}</span>}
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: '11px', color: muted, marginBottom: '6px' }}>
-                            {item.poste}{item.city ? ` · ${item.city}` : ''}
-                          </div>
-                        )}
-
-                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' as const }}>
-                          {(item.isProject ? item.needs : item.skills)?.slice(0, 3).map((t: string, j: number) => (
-                            <span key={j} style={{ fontSize: '10px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: surface, color: muted, border: `1px solid ${hint}` }}>{t}</span>
-                          ))}
-                          {item.isProject && item.sector && (
-                            <span style={{ fontSize: '10px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: 'rgba(6,182,212,0.1)', color: '#22D3EE', border: '1px solid rgba(6,182,212,0.2)' }}>{item.sector}</span>
-                          )}
+                      ) : (
+                        <div style={{ fontSize: '11px', color: muted, marginBottom: '6px' }}>
+                          {item.poste}{item.city ? ` · ${item.city}` : ''}
                         </div>
+                      )}
+                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' as const }}>
+                        {(item.isProject ? item.needs : item.skills)?.slice(0, 3).map((t: string, j: number) => (
+                          <span key={j} style={{ fontSize: '10px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: surface, color: muted, border: `1px solid ${hint}` }}>{t}</span>
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            ))}
             <div style={{ height: 8 }} />
           </>
         )}
@@ -516,7 +509,8 @@ const matchSearch = q === '' || (
       {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
-          <div key={item.id} onClick={() => window.location.href = item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
+          <div key={item.id} onClick={() => window.location.href = item.href}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
             {item.id === 'swipe' ? (
               <>
                 <div style={{ width: 38, height: 38, borderRadius: '50%', border: `2px solid ${cfg.accent}`, background: cfg.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -529,10 +523,10 @@ const matchSearch = q === '' || (
                 <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {item.id === 'home' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9L12 2L21 9V20C21 20.55 20.55 21 20 21H15V15H9V21H4C3.45 21 3 20.55 3 20V9Z" stroke={muted} strokeWidth="1.5" /></svg>}
                   {item.id === 'chat' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke={muted} strokeWidth="1.5" /></svg>}
-                  {item.id === 'explorer' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke={item.active ? cfg.accentLight : muted} strokeWidth="1.5" /><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke={item.active ? cfg.accentLight : muted} strokeWidth="1.5" strokeLinejoin="round" /></svg>}
+                  {item.id === 'explorer' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke={(item as any).active ? cfg.accentLight : muted} strokeWidth="1.5" /><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke={(item as any).active ? cfg.accentLight : muted} strokeWidth="1.5" strokeLinejoin="round" /></svg>}
                   {item.id === 'profil' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke={muted} strokeWidth="1.5" /><path d="M4 20c0-3.31 3.58-6 8-6s8 2.69 8 6" stroke={muted} strokeWidth="1.5" strokeLinecap="round" /></svg>}
                 </div>
-                <span style={{ fontSize: '8px', fontWeight: '600', textTransform: 'uppercase' as const, color: item.active ? cfg.accentLight : muted, letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '8px', fontWeight: '600', textTransform: 'uppercase' as const, color: (item as any).active ? cfg.accentLight : muted, letterSpacing: '0.04em' }}>
                   {item.id === 'home' ? 'Accueil' : item.id === 'chat' ? 'Chat' : item.id === 'explorer' ? 'Explorer' : 'Profil'}
                 </span>
               </>
