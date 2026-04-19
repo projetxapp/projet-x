@@ -5,51 +5,44 @@ import { useMode, Mode } from '../context/ModeContext'
 import { supabase } from '../lib/supabase'
 
 const ALL_SKILLS = [
-  'Ableton Live', 'Acting', 'Adobe XD', 'Adalo', 'After Effects', 'Agile', 'Airtable',
-  'Amazon FBA', 'Animation 2D', 'Animation 3D', 'AR', 'Architecture', 'Arrangement musical',
-  'Assistanat virtuel', 'AutoCAD', 'A/B Testing', 'Affinity Designer',
-  'Back-end', 'Barista', 'Beatmaking', 'Blockchain', 'Blender', 'Bootstrap', 'Broderie',
-  'Branding', 'Bug Bounty', 'Business Development', 'Business Plan',
-  'Canva', 'CapCut', 'Chant', 'Chorégraphie', 'Cinema 4D', 'CI/CD', 'Coaching de vie',
+  'Ableton Live', 'Acting', 'Adobe XD', 'After Effects', 'Agile', 'Airtable',
+  'Animation 2D', 'Animation 3D', 'Back-end', 'Barista', 'Beatmaking', 'Blockchain',
+  'Blender', 'Bootstrap', 'Branding', 'Bug Bounty', 'Business Development', 'Business Plan',
+  'Canva', 'CapCut', 'Chant', 'Chorégraphie', 'CI/CD', 'Cinema 4D', 'Coaching de vie',
   'Coaching sportif', 'Cold email', 'Color grading', 'Community Management', 'Comptabilité',
-  'Copywriting', 'Couture', 'Création de contenu', 'Création de vêtements', 'CRO', 'CSS', 'Cuisine',
-  'Cybersécurité', 'DaVinci Resolve', 'Danse', 'Data Analysis', 'Data Science', 'Deep Learning',
-  'DeFi', 'Design System', 'DevOps', 'Direction artistique', 'Django', 'Docker', 'Drone', 'DJ',
+  'Copywriting', 'Couture', 'Création de contenu', 'CRO', 'CSS', 'Cuisine', 'Cybersécurité',
+  'DaVinci Resolve', 'Danse', 'Data Analysis', 'Data Science', 'Deep Learning', 'DeFi',
+  'Design System', 'DevOps', 'Direction artistique', 'Django', 'Docker', 'Drone', 'DJ',
   'E-commerce', 'Email Marketing', 'Excel avancé', 'Expo',
-  'Facebook Ads', 'FastAPI', 'Figma', 'Final Cut Pro', 'Firebase', 'Fitness model', 'FL Studio',
-  'Flask', 'Flutter', 'Framer', 'Front-end', 'Fundraising',
+  'Facebook Ads', 'FastAPI', 'Figma', 'Final Cut Pro', 'Firebase', 'Fitness model',
+  'FL Studio', 'Flask', 'Flutter', 'Framer', 'Front-end', 'Fundraising',
   'Game Design', 'Gestion de projet', 'Git', 'Go', 'Google Ads', 'Google Analytics',
   'Google Cloud', 'GraphQL', 'Ghostwriting', 'Guitare',
-  'HTML', 'Hubspot', 'Hardware',
-  'Illustration numérique', 'InDesign', 'Influence Marketing', 'Instagram', 'IoT',
-  'JavaScript', 'Journalisme', 'Judo',
-  'Kotlin', 'Kubernetes',
-  'LangChain', 'Laravel', 'Leadership', 'Lightroom', 'LinkedIn', 'LinkedIn Ads', 'Live streaming',
-  'Logic Pro', 'Logo design',
-  'Machine Learning', 'Make', 'Management', 'Mannequin', 'Mannequin e-commerce', 'Mannequin mode',
-  'Mannequin photo', 'Marketing', 'Mastering', 'Massage', 'Maya', 'Méditation', 'Mixage audio',
-  'Mixologie', 'Mixpanel', 'MongoDB', 'Motion Design', 'MySQL',
+  'HTML', 'Hubspot', 'Hardware', 'Illustration numérique', 'InDesign',
+  'Influence Marketing', 'Instagram', 'IoT', 'JavaScript', 'Journalisme', 'Judo',
+  'Kotlin', 'Kubernetes', 'LangChain', 'Laravel', 'Leadership', 'Lightroom',
+  'LinkedIn', 'LinkedIn Ads', 'Live streaming', 'Logic Pro', 'Logo design',
+  'Machine Learning', 'Make', 'Management', 'Mannequin', 'Mannequin e-commerce',
+  'Mannequin mode', 'Mannequin photo', 'Marketing', 'Mastering', 'Massage', 'Maya',
+  'Méditation', 'Mixage audio', 'Mixologie', 'Mixpanel', 'MongoDB', 'Motion Design', 'MySQL',
   'n8n', 'Nail art', 'NestJS', 'Newsletter', 'NFT', 'NLP', 'Node.js', 'Notion', 'Nutrition',
-  'OpenAI API', 'OSINT',
-  'Packaging', 'Pandas', 'Patronage', 'Pentest', 'Personal shopper', 'Personal training',
-  'PHP', 'Photographie', 'Photographie mariage', 'Photographie mode', 'Photographie portrait',
-  'Photographie produit', 'Photoshop', 'Piano', 'Pilates', 'Pixel Art', 'PNL', 'Podcast production',
-  'PostgreSQL', 'Power BI', 'Premiere Pro', 'Procreate', 'Product Management', 'Product Owner',
-  'Pro Tools', 'Prompt Engineering', 'Prospection B2B', 'PWA', 'PyTorch', 'Python',
-  'QA Testing',
-  'Rap', 'React', 'React Native', 'Recrutement', 'Rédaction SEO', 'Rédaction web', 'Redis',
+  'OpenAI API', 'OSINT', 'Packaging', 'Pandas', 'Pentest', 'Personal shopper',
+  'Personal training', 'PHP', 'Photographie', 'Photographie mariage', 'Photographie mode',
+  'Photographie portrait', 'Photographie produit', 'Photoshop', 'Piano', 'Pilates',
+  'Pixel Art', 'PNL', 'Podcast production', 'PostgreSQL', 'Power BI', 'Premiere Pro',
+  'Procreate', 'Product Management', 'Product Owner', 'Pro Tools', 'Prompt Engineering',
+  'Prospection B2B', 'PWA', 'PyTorch', 'Python', 'QA Testing', 'Rap',
+  'React', 'React Native', 'Recrutement', 'Rédaction SEO', 'Rédaction web', 'Redis',
   'REST API', 'Retool', 'Retouche photo', 'RGPD', 'Ruby on Rails', 'Running', 'Rust',
   'Salesforce', 'Sales', 'Sass', 'Scrum', 'SEA', 'SEO', 'Service client', 'SFX makeup',
-  'Shopify', 'SketchUp', 'Smart Contracts', 'Social Media Management', 'Solidity', 'Sound design',
+  'Shopify', 'Smart Contracts', 'Social Media Management', 'Solidity', 'Sound design',
   'Sophrologie', 'Spring Boot', 'SQL', 'Stable Diffusion', 'Stand-up', 'Storyboard',
   'Storytelling', 'Studio photo', 'Supabase', 'Surf', 'Swift', 'SwiftUI',
   'Tableau', 'Tailwind CSS', 'Tatouage', 'TensorFlow', 'Théâtre', 'TikTok', 'TikTok Ads',
   'TikTok production', 'Trading crypto', 'Traduction FR/EN', 'Traduction FR/ES',
-  'TypeScript', 'Twitch',
-  'UI Design', 'Unity', 'Unreal Engine', 'UX Design', 'UX Research', 'UX Writing',
-  'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
-  'Web3', 'Webflow', 'WordPress',
-  'Yoga', 'YouTube', 'YouTube production', 'ZBrush', 'Zapier',
+  'TypeScript', 'Twitch', 'UI Design', 'Unity', 'Unreal Engine', 'UX Design',
+  'UX Research', 'UX Writing', 'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
+  'Web3', 'Webflow', 'WordPress', 'Yoga', 'YouTube', 'YouTube production', 'ZBrush', 'Zapier',
 ].sort()
 
 const ALL_SECTORS = [
@@ -61,15 +54,15 @@ const ALL_SECTORS = [
   'ESS', 'Esport', 'FashionTech', 'FinTech', 'FoodTech', 'FoodWaste', 'Formation en ligne',
   'Freelance & Indépendants', 'FutureOfWork', 'GreenTech', 'Hardware & IoT', 'HealthTech',
   'Hôtellerie', 'HRTech', 'IA Générative', 'Impact social', 'Impression 3D',
-  'Influence marketing', 'Insertion professionnelle', 'Intelligence Artificielle', 'Jeux vidéo',
-  'LegalTech', 'Live shopping', 'Livraison de repas', 'Luxe & Haute couture',
+  'Influence marketing', 'Insertion professionnelle', 'Intelligence Artificielle',
+  'Jeux vidéo', 'LegalTech', 'Live shopping', 'Livraison de repas', 'Luxe & Haute couture',
   'Machine Learning', 'Marketplace', 'Marketplace B2B', 'MediaTech', 'MedTech', 'Métavers',
-  'Micro-mobilité', 'Mobilité durable', 'Mode durable', 'Mobility', 'Néobanque', 'Newsletter',
-  'No-code', 'Paiement & PayTech', 'Podcast', 'Presse en ligne', 'PropTech',
-  'Recommerce & Seconde main', 'Recrutement & RH', 'Robotique',
-  'SaaS', 'Santé mentale', 'Smart City', 'Smart Home & Domotique', 'SportTech',
-  'Sports extrêmes', 'Streaming vidéo', 'Streetwear', 'Talent management',
-  'Télémédecine', 'Tourisme durable', 'TravelTech', 'Tutorat & Soutien scolaire',
+  'Micro-mobilité', 'Mobilité durable', 'Mode durable', 'Mobility', 'Néobanque',
+  'Newsletter', 'No-code', 'Paiement & PayTech', 'Podcast', 'Presse en ligne', 'PropTech',
+  'Recommerce & Seconde main', 'Recrutement & RH', 'Robotique', 'SaaS', 'Santé mentale',
+  'Smart City', 'Smart Home & Domotique', 'SportTech', 'Sports extrêmes',
+  'Streaming vidéo', 'Streetwear', 'Talent management', 'Télémédecine',
+  'Tourisme durable', 'TravelTech', 'Tutorat & Soutien scolaire',
   'Véhicule électrique', 'Web3', 'WellnessTech',
 ].sort()
 
@@ -82,12 +75,10 @@ const SKILL_CLUSTERS: Record<string, string[]> = {
   'TikTok': ['Instagram', 'YouTube', 'CapCut', 'Création de contenu', 'Community Management'],
   'Photographie': ['Lightroom', 'Photoshop', 'Studio photo', 'Retouche photo', 'Drone', 'Vidéographie'],
   'Beatmaking': ['Ableton Live', 'FL Studio', 'Mixage audio', 'Mastering', 'Sound design'],
-  'SEO': ['SEA', 'Google Ads', 'Copywriting', 'Rédaction web', 'Google Analytics', 'Growth Hacking'],
+  'SEO': ['SEA', 'Google Ads', 'Copywriting', 'Rédaction web', 'Google Analytics'],
   'Machine Learning': ['Deep Learning', 'Python', 'TensorFlow', 'PyTorch', 'Data Science', 'NLP'],
   'Node.js': ['Back-end', 'PostgreSQL', 'REST API', 'GraphQL', 'Supabase'],
   'Motion Design': ['After Effects', 'Animation 2D', 'Animation 3D', 'Cinema 4D', 'Blender', 'VFX'],
-  'Danse': ['Chorégraphie', 'Coaching sportif'],
-  'Mannequin': ['Photographie mode', 'Fitness model', 'Personal shopper', 'Maquillage'],
   'Copywriting': ['Rédaction web', 'Rédaction SEO', 'Newsletter', 'Storytelling', 'UX Writing'],
   'Python': ['Machine Learning', 'Data Science', 'FastAPI', 'Django', 'Pandas'],
 }
@@ -186,7 +177,27 @@ function calcCompletion(mode: string, data: any): number {
   return 0
 }
 
-// ── SearchSelector ──
+// ── TOUS LES SOUS-COMPOSANTS SONT EN DEHORS DE ProfilPage ──
+// C'est la clé : si un composant est défini DANS ProfilPage,
+// React le recrée à chaque render → perd le focus
+
+function Section({ title, children, card, cardBorder, hint }: {
+  title: string
+  children: React.ReactNode
+  card: string
+  cardBorder: string
+  hint: string
+}) {
+  return (
+    <div style={{ background: card, border: `1px solid ${cardBorder}`, borderRadius: '18px', padding: '16px', marginBottom: '10px' }}>
+      <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: hint, marginBottom: '12px' }}>
+        {title}
+      </div>
+      {children}
+    </div>
+  )
+}
+
 function SearchSelector({ all, selected, onAdd, onRemove, placeholder, popular, max = 10, accent, accentLight, card, cardBorder, surface, text, muted, hint }: any) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -227,7 +238,8 @@ function SearchSelector({ all, selected, onAdd, onRemove, placeholder, popular, 
           <circle cx="11" cy="11" r="8" stroke={focused ? accentLight : muted} strokeWidth="2" />
           <path d="M21 21L16.65 16.65" stroke={focused ? accentLight : muted} strokeWidth="2" strokeLinecap="round" />
         </svg>
-        <input value={query}
+        <input
+          value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => { setFocused(true); setOpen(true) }}
           onBlur={() => { setFocused(false); setTimeout(() => setOpen(false), 150) }}
@@ -304,7 +316,6 @@ function SearchSelector({ all, selected, onAdd, onRemove, placeholder, popular, 
   )
 }
 
-// ── LinksManager ──
 function LinksManager({ links, setLinks, editing, accent, accentLight, card, cardBorder, surface, text, muted, hint }: any) {
   const [showAdd, setShowAdd] = useState(false)
   const [newType, setNewType] = useState('site')
@@ -332,8 +343,7 @@ function LinksManager({ links, setLinks, editing, accent, accentLight, card, car
           </div>
           {editing
             ? <button onClick={() => setLinks(links.filter((_: any, j: number) => j !== i))} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: '14px', opacity: 0.7 }}>×</button>
-            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke={accentLight} strokeWidth="2" strokeLinecap="round" /></svg>
-          }
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke={accentLight} strokeWidth="2" strokeLinecap="round" /></svg>}
         </div>
       ))}
       {links.length === 0 && !showAdd && <div style={{ textAlign: 'center', padding: '12px', color: muted, fontSize: '11px' }}>Aucun lien ajouté</div>}
@@ -360,7 +370,6 @@ function LinksManager({ links, setLinks, editing, accent, accentLight, card, car
   )
 }
 
-// ── ModeSelector ──
 function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string }) {
   const { activeMode, setActiveMode, userModes, activateMode } = useMode()
   const modes: Mode[] = ['talent', 'project', 'investor']
@@ -381,7 +390,7 @@ function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string
   )
 }
 
-// ── Page principale ──
+// ── PAGE PRINCIPALE ──
 export default function ProfilPage() {
   const { activeMode, userModes, activateMode, dark, setDark } = useMode()
   const [editing, setEditing] = useState(false)
@@ -466,11 +475,42 @@ export default function ProfilPage() {
           setAvatarUrl(p.avatar_url || '')
         }
         const { data: t } = await supabase.from('talent_profiles').select('*').eq('user_id', user.id).single()
-        if (t) { setTalentBio(t.bio || ''); setTalentSkills(t.skills || []); setTalentHours(t.hours_per_week || ''); setTalentModes(t.collab_modes || []); setTalentLinks(t.links || []); setTalentStatut(t.statut || 'Étudiant(e)') }
+        if (t) {
+          setTalentBio(t.bio || '')
+          setTalentSkills(t.skills || [])
+          setTalentHours(t.hours_per_week || '')
+          setTalentModes(t.collab_modes || [])
+          setTalentLinks(t.links || [])
+          setTalentStatut(t.statut || 'Étudiant(e)')
+        }
         const { data: proj } = await supabase.from('project_profiles').select('*').eq('user_id', user.id).single()
-        if (proj) { setProjectName(proj.project_name || ''); setProjectBio(proj.founder_bio || ''); setProjectDesc(proj.description || ''); setProjectStage(proj.stage || 'Idée'); setProjectSectors(proj.sectors || []); setProjectWorkMode(proj.work_mode || 'remote'); setProjectNeeds(proj.needs || []); setProjectCollabModes(proj.collab_modes || []); setProjectEquity(proj.equity || ''); setProjectBudget(proj.budget || ''); setProjectTeamSize(proj.team_size?.toString() || '1'); setProjectLinks(proj.links || []); setProjectStatut(proj.statut || 'Fondateur(rice)') }
+        if (proj) {
+          setProjectName(proj.project_name || '')
+          setProjectBio(proj.founder_bio || '')
+          setProjectDesc(proj.description || '')
+          setProjectStage(proj.stage || 'Idée')
+          setProjectSectors(proj.sectors || [])
+          setProjectWorkMode(proj.work_mode || 'remote')
+          setProjectNeeds(proj.needs || [])
+          setProjectCollabModes(proj.collab_modes || [])
+          setProjectEquity(proj.equity || '')
+          setProjectBudget(proj.budget || '')
+          setProjectTeamSize(proj.team_size?.toString() || '1')
+          setProjectLinks(proj.links || [])
+          setProjectStatut(proj.statut || 'Fondateur(rice)')
+        }
         const { data: inv } = await supabase.from('investor_profiles').select('*').eq('user_id', user.id).single()
-        if (inv) { setInvestorBio(inv.bio || ''); setInvestorThesis(inv.thesis || ''); setInvestorTicketMin(inv.ticket_min?.toString() || ''); setInvestorTicketMax(inv.ticket_max?.toString() || ''); setInvestorSectors(inv.sectors || []); setInvestorStages(inv.preferred_stages || []); setInvestorPortfolio(inv.portfolio || []); setInvestorLinks(inv.links || []); setInvestorStatut(inv.statut || 'Business Angel') }
+        if (inv) {
+          setInvestorBio(inv.bio || '')
+          setInvestorThesis(inv.thesis || '')
+          setInvestorTicketMin(inv.ticket_min?.toString() || '')
+          setInvestorTicketMax(inv.ticket_max?.toString() || '')
+          setInvestorSectors(inv.sectors || [])
+          setInvestorStages(inv.preferred_stages || [])
+          setInvestorPortfolio(inv.portfolio || [])
+          setInvestorLinks(inv.links || [])
+          setInvestorStatut(inv.statut || 'Business Angel')
+        }
       } catch (e) { console.error(e) }
       setLoading(false)
     }
@@ -482,9 +522,33 @@ export default function ProfilPage() {
     try {
       await supabase.from('profiles').update({ city: editCity }).eq('id', userId)
       setDisplayCity(editCity)
-      if (activeMode === 'talent') await supabase.from('talent_profiles').upsert({ user_id: userId, bio: talentBio, skills: talentSkills, hours_per_week: talentHours, collab_modes: talentModes, links: talentLinks, statut: talentStatut, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-      if (activeMode === 'project') await supabase.from('project_profiles').upsert({ user_id: userId, project_name: projectName, founder_bio: projectBio, description: projectDesc, stage: projectStage, sectors: projectSectors, work_mode: projectWorkMode, needs: projectNeeds, collab_modes: projectCollabModes, equity: projectEquity, budget: projectBudget, team_size: parseInt(projectTeamSize) || 1, links: projectLinks, statut: projectStatut, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-      if (activeMode === 'investor') await supabase.from('investor_profiles').upsert({ user_id: userId, bio: investorBio, thesis: investorThesis, ticket_min: parseInt(investorTicketMin) || 0, ticket_max: parseInt(investorTicketMax) || 0, sectors: investorSectors, preferred_stages: investorStages, portfolio: investorPortfolio, links: investorLinks, statut: investorStatut, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+      if (activeMode === 'talent') {
+        await supabase.from('talent_profiles').upsert({
+          user_id: userId, bio: talentBio, skills: talentSkills,
+          hours_per_week: talentHours, collab_modes: talentModes,
+          links: talentLinks, statut: talentStatut, updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+      }
+      if (activeMode === 'project') {
+        await supabase.from('project_profiles').upsert({
+          user_id: userId, project_name: projectName, founder_bio: projectBio,
+          description: projectDesc, stage: projectStage, sectors: projectSectors,
+          work_mode: projectWorkMode, needs: projectNeeds, collab_modes: projectCollabModes,
+          equity: projectEquity, budget: projectBudget,
+          team_size: parseInt(projectTeamSize) || 1,
+          links: projectLinks, statut: projectStatut, updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+      }
+      if (activeMode === 'investor') {
+        await supabase.from('investor_profiles').upsert({
+          user_id: userId, bio: investorBio, thesis: investorThesis,
+          ticket_min: parseInt(investorTicketMin) || 0,
+          ticket_max: parseInt(investorTicketMax) || 0,
+          sectors: investorSectors, preferred_stages: investorStages,
+          portfolio: investorPortfolio, links: investorLinks,
+          statut: investorStatut, updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+      }
       setEditing(false)
     } catch (e) { console.error(e) }
     setSaving(false)
@@ -512,14 +576,11 @@ export default function ProfilPage() {
   const setCurrentStatutOpen = activeMode === 'talent' ? setTalentStatutOpen : activeMode === 'project' ? setProjectStatutOpen : setInvestorStatutOpen
   const setCurrentStatut = activeMode === 'talent' ? setTalentStatut : activeMode === 'project' ? setProjectStatut : setInvestorStatut
 
-  function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <div style={{ background: card, border: `1px solid ${cardBorder}`, borderRadius: '18px', padding: '16px', marginBottom: '10px' }}>
-        <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: hint, marginBottom: '12px' }}>{title}</div>
-        {children}
-      </div>
-    )
-  }
+  const navItems = [
+    { id: 'home', href: '/home' }, { id: 'chat', href: '/chat' },
+    { id: 'swipe', href: '/swipe' }, { id: 'explorer', href: '/explorer' },
+    { id: 'profil', href: '/profil', active: true },
+  ]
 
   if (loading) return (
     <div style={{ height: '100%', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, sans-serif', flexDirection: 'column', gap: '16px' }}>
@@ -527,12 +588,6 @@ export default function ProfilPage() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
-
-  const navItems = [
-    { id: 'home', href: '/home' }, { id: 'chat', href: '/chat' },
-    { id: 'swipe', href: '/swipe' }, { id: 'explorer', href: '/explorer' },
-    { id: 'profil', href: '/profil', active: true },
-  ]
 
   return (
     <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', transition: 'background 0.3s' }}>
@@ -575,7 +630,7 @@ export default function ProfilPage() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '17px', fontWeight: '800', color: text, marginBottom: '4px' }}>{displayName}</div>
-              {/* Statut badge */}
+              {/* Statut */}
               <div style={{ marginBottom: '4px', position: 'relative' }}>
                 {!editing ? (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', background: cfg.accentBg, fontSize: '11px', fontWeight: '600', color: cfg.accentLight }}>
@@ -603,9 +658,14 @@ export default function ProfilPage() {
                   </div>
                 )}
               </div>
+              {/* Ville */}
               {editing ? (
-                <input value={editCity} onChange={e => setEditCity(e.target.value)} placeholder="Ta ville..."
-                  style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '8px', padding: '4px 10px', color: text, fontSize: '11px', outline: 'none', fontFamily: 'inherit', width: '140px' }} />
+                <input
+                  value={editCity}
+                  onChange={e => setEditCity(e.target.value)}
+                  placeholder="Ta ville..."
+                  style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '8px', padding: '4px 10px', color: text, fontSize: '11px', outline: 'none', fontFamily: 'inherit', width: '140px' }}
+                />
               ) : (
                 <div style={{ fontSize: '11px', color: muted }}>
                   {displayCity ? `📍 ${displayCity}` : '📍 Ajoute ta ville'}{displayAge ? ` · ${displayAge}` : ''}
@@ -634,6 +694,13 @@ export default function ProfilPage() {
               <div style={{ height: 6, background: surface, borderRadius: '6px', overflow: 'hidden' }}>
                 <div style={{ width: `${completion}%`, height: '100%', background: completion >= 80 ? 'linear-gradient(90deg,#4ADE80,#22D3EE)' : cfg.gradient, borderRadius: '6px', transition: 'width 0.5s ease' }} />
               </div>
+              {completion < 100 && (
+                <div style={{ fontSize: '10px', color: hint, marginTop: '5px' }}>
+                  {completion < 40 && '💡 Complète ton profil pour booster ton score de matching'}
+                  {completion >= 40 && completion < 70 && '🔥 Bon début ! Encore quelques infos pour maximiser tes matches'}
+                  {completion >= 70 && completion < 100 && '⭐ Profil presque complet — tu es bien positionné(e)'}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -652,24 +719,35 @@ export default function ProfilPage() {
             {/* ══ TALENT ══ */}
             {activeMode === 'talent' && (
               <>
-                <Section title="Ma bio">
+                <Section title="Ma bio" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <textarea value={talentBio} onChange={e => setTalentBio(e.target.value)} placeholder="Décris-toi en quelques phrases..." style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                    ? <textarea
+                        value={talentBio}
+                        onChange={e => setTalentBio(e.target.value)}
+                        placeholder="Décris-toi en quelques phrases..."
+                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+                      />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{talentBio || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-                <Section title="Mes compétences">
-                  <SearchSelector all={ALL_SKILLS} selected={talentSkills}
+
+                <Section title="Mes compétences" card={card} cardBorder={cardBorder} hint={hint}>
+                  <SearchSelector
+                    all={ALL_SKILLS} selected={talentSkills}
                     onAdd={(s: string) => setTalentSkills(p => [...p, s])}
                     onRemove={(s: string) => setTalentSkills(p => p.filter(x => x !== s))}
                     placeholder="Tape une lettre pour chercher..."
                     popular={['Beatmaking', 'Coaching sportif', 'Copywriting', 'Danse', 'Figma', 'Mannequin', 'Motion Design', 'Photographie', 'React Native', 'SEO', 'TikTok', 'YouTube production']}
                     max={15} accent={cfg.accent} accentLight={cfg.accentLight}
-                    card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
+                    card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint}
+                  />
                 </Section>
-                <Section title="Liens & démos">
-                  <LinksManager links={talentLinks} setLinks={setTalentLinks} editing={editing} accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
+
+                <Section title="Liens & démos" card={card} cardBorder={cardBorder} hint={hint}>
+                  <LinksManager links={talentLinks} setLinks={setTalentLinks} editing={editing}
+                    accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-                <Section title="Ma disponibilité">
+
+                <Section title="Ma disponibilité" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                     {HOURS_OPTIONS.map(opt => {
                       const active = talentHours === opt.id
@@ -689,7 +767,8 @@ export default function ProfilPage() {
                     })}
                   </div>
                 </Section>
-                <Section title="Je suis disponible pour">
+
+                <Section title="Je suis disponible pour" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {COLLAB_MODES.map(m => {
                       const active = talentModes.includes(m.id)
@@ -715,22 +794,28 @@ export default function ProfilPage() {
             {/* ══ PROJET ══ */}
             {activeMode === 'project' && (
               <>
-                <Section title="Nom du projet">
+                <Section title="Nom du projet" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <input value={projectName} onChange={e => setProjectName(e.target.value)} placeholder="Le nom de ton projet" style={{ width: '100%', padding: '9px 12px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                    ? <input value={projectName} onChange={e => setProjectName(e.target.value)} placeholder="Le nom de ton projet"
+                        style={{ width: '100%', padding: '9px 12px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{projectName || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-                <Section title="Bio fondateur">
+
+                <Section title="Bio fondateur" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <textarea value={projectBio} onChange={e => setProjectBio(e.target.value)} placeholder="Qui es-tu ? Pourquoi ce projet ?" style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                    ? <textarea value={projectBio} onChange={e => setProjectBio(e.target.value)} placeholder="Qui es-tu ? Pourquoi ce projet ?"
+                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{projectBio || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-                <Section title="Le projet">
+
+                <Section title="Le projet" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <textarea value={projectDesc} onChange={e => setProjectDesc(e.target.value)} placeholder="Le problème, la solution, la cible..." style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                    ? <textarea value={projectDesc} onChange={e => setProjectDesc(e.target.value)} placeholder="Le problème, la solution, la cible..."
+                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{projectDesc || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-                <Section title="Stade & Mode de travail">
+
+                <Section title="Stade & Mode de travail" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '14px' }}>
                     {STAGES.map(s => (
                       <button key={s} onClick={() => editing && setProjectStage(s)}
@@ -753,15 +838,18 @@ export default function ProfilPage() {
                     ))}
                   </div>
                 </Section>
-                <Section title="Secteurs">
+
+                <Section title="Secteurs" card={card} cardBorder={cardBorder} hint={hint}>
                   <SearchSelector all={ALL_SECTORS} selected={projectSectors}
                     onAdd={(s: string) => setProjectSectors(p => [...p, s])}
                     onRemove={(s: string) => setProjectSectors(p => p.filter(x => x !== s))}
-                    placeholder="GreenTech, SaaS, EdTech..." popular={POPULAR_SECTORS.slice(0, 6)}
+                    placeholder="GreenTech, SaaS, EdTech..."
+                    popular={POPULAR_SECTORS.slice(0, 6)}
                     max={8} accent={cfg.accent} accentLight={cfg.accentLight}
                     card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-                <Section title="Compétences recherchées">
+
+                <Section title="Compétences recherchées" card={card} cardBorder={cardBorder} hint={hint}>
                   <SearchSelector all={ALL_SKILLS} selected={projectNeeds}
                     onAdd={(s: string) => setProjectNeeds(p => [...p, s])}
                     onRemove={(s: string) => setProjectNeeds(p => p.filter(x => x !== s))}
@@ -770,21 +858,27 @@ export default function ProfilPage() {
                     max={10} accent={cfg.accent} accentLight={cfg.accentLight}
                     card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-                <Section title="Rémunération">
+
+                <Section title="Rémunération" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
                       <div style={{ fontSize: '9px', color: hint, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Budget / mois</div>
-                      {editing ? <input value={projectBudget} onChange={e => setProjectBudget(e.target.value)} placeholder="500€/mois" style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                      {editing
+                        ? <input value={projectBudget} onChange={e => setProjectBudget(e.target.value)} placeholder="500€/mois"
+                            style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                         : <div style={{ fontSize: '14px', fontWeight: '800', color: '#F97316' }}>{projectBudget || '—'}</div>}
                     </div>
                     <div>
                       <div style={{ fontSize: '9px', color: hint, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Equity</div>
-                      {editing ? <input value={projectEquity} onChange={e => setProjectEquity(e.target.value)} placeholder="1–5%" style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                      {editing
+                        ? <input value={projectEquity} onChange={e => setProjectEquity(e.target.value)} placeholder="1–5%"
+                            style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                         : <div style={{ fontSize: '14px', fontWeight: '800', color: '#4ADE80' }}>{projectEquity || '—'}</div>}
                     </div>
                   </div>
                 </Section>
-                <Section title="Types de collaboration">
+
+                <Section title="Types de collaboration" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {COLLAB_MODES.map(m => {
                       const active = projectCollabModes.includes(m.id)
@@ -804,8 +898,10 @@ export default function ProfilPage() {
                     })}
                   </div>
                 </Section>
-                <Section title="Liens">
-                  <LinksManager links={projectLinks} setLinks={setProjectLinks} editing={editing} accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
+
+                <Section title="Liens" card={card} cardBorder={cardBorder} hint={hint}>
+                  <LinksManager links={projectLinks} setLinks={setProjectLinks} editing={editing}
+                    accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
               </>
             )}
@@ -813,39 +909,50 @@ export default function ProfilPage() {
             {/* ══ INVESTISSEUR ══ */}
             {activeMode === 'investor' && (
               <>
-                <Section title="Ma bio">
+                <Section title="Ma bio" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <textarea value={investorBio} onChange={e => setInvestorBio(e.target.value)} placeholder="Ton parcours, tes valeurs..." style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                    ? <textarea value={investorBio} onChange={e => setInvestorBio(e.target.value)} placeholder="Ton parcours, tes valeurs..."
+                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{investorBio || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-                <Section title="Ma thèse d'investissement">
+
+                <Section title="Ma thèse d'investissement" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <textarea value={investorThesis} onChange={e => setInvestorThesis(e.target.value)} placeholder="Quel type de projets ?" style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                    ? <textarea value={investorThesis} onChange={e => setInvestorThesis(e.target.value)} placeholder="Quel type de projets ?"
+                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{investorThesis || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-                <Section title="Ticket d'investissement (€)">
+
+                <Section title="Ticket d'investissement (€)" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
                       <div style={{ fontSize: '9px', color: hint, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Minimum</div>
-                      {editing ? <input value={investorTicketMin} onChange={e => setInvestorTicketMin(e.target.value)} placeholder="1 000" style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                      {editing
+                        ? <input value={investorTicketMin} onChange={e => setInvestorTicketMin(e.target.value)} placeholder="1 000"
+                            style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                         : <div style={{ fontSize: '16px', fontWeight: '800', color: '#4ADE80' }}>{investorTicketMin ? `${investorTicketMin}€` : '—'}</div>}
                     </div>
                     <div>
                       <div style={{ fontSize: '9px', color: hint, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Maximum</div>
-                      {editing ? <input value={investorTicketMax} onChange={e => setInvestorTicketMax(e.target.value)} placeholder="50 000" style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
+                      {editing
+                        ? <input value={investorTicketMax} onChange={e => setInvestorTicketMax(e.target.value)} placeholder="50 000"
+                            style={{ width: '100%', padding: '8px 10px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                         : <div style={{ fontSize: '16px', fontWeight: '800', color: '#4ADE80' }}>{investorTicketMax ? `${investorTicketMax}€` : '—'}</div>}
                     </div>
                   </div>
                 </Section>
-                <Section title="Secteurs d'investissement">
+
+                <Section title="Secteurs d'investissement" card={card} cardBorder={cardBorder} hint={hint}>
                   <SearchSelector all={ALL_SECTORS} selected={investorSectors}
                     onAdd={(s: string) => setInvestorSectors(p => [...p, s])}
                     onRemove={(s: string) => setInvestorSectors(p => p.filter(x => x !== s))}
-                    placeholder="GreenTech, FinTech..." popular={POPULAR_SECTORS.slice(0, 6)}
+                    placeholder="GreenTech, FinTech..."
+                    popular={POPULAR_SECTORS.slice(0, 6)}
                     max={8} accent={cfg.accent} accentLight={cfg.accentLight}
                     card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-                <Section title="Stades préférés">
+
+                <Section title="Stades préférés" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
                     {STAGES.map(s => {
                       const active = investorStages.includes(s)
@@ -858,7 +965,8 @@ export default function ProfilPage() {
                     })}
                   </div>
                 </Section>
-                <Section title="Portfolio">
+
+                <Section title="Portfolio" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing && (
                     <button onClick={() => setInvestorPortfolio(p => [...p, { name: 'Nouveau projet', stage: 'Idée', amount: '0€' }])}
                       style={{ background: cfg.accentBg, border: `1px solid ${cfg.accent}30`, borderRadius: '8px', padding: '4px 10px', fontSize: '11px', color: cfg.accentLight, cursor: 'pointer', fontWeight: '600', marginBottom: '10px' }}>
@@ -869,7 +977,9 @@ export default function ProfilPage() {
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: surface, borderRadius: '11px', marginBottom: '6px' }}>
                       <div style={{ width: 32, height: 32, borderRadius: '50%', background: cfg.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800', color: 'white', flexShrink: 0 }}>{p.name[0]}</div>
                       <div style={{ flex: 1 }}>
-                        {editing ? <input value={p.name} onChange={e => setInvestorPortfolio(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} style={{ background: 'transparent', border: 'none', color: text, fontSize: '12px', fontWeight: '600', outline: 'none', width: '100%', padding: 0, fontFamily: 'inherit' }} />
+                        {editing
+                          ? <input value={p.name} onChange={e => setInvestorPortfolio(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                              style={{ background: 'transparent', border: 'none', color: text, fontSize: '12px', fontWeight: '600', outline: 'none', width: '100%', padding: 0, fontFamily: 'inherit' }} />
                           : <div style={{ fontSize: '12px', fontWeight: '600', color: text }}>{p.name}</div>}
                         <div style={{ display: 'flex', gap: '5px', marginTop: '3px' }}>
                           <span style={{ fontSize: '9px', fontWeight: '600', padding: '1px 7px', borderRadius: '20px', background: 'rgba(6,182,212,0.1)', color: '#22D3EE' }}>{p.stage}</span>
@@ -881,8 +991,10 @@ export default function ProfilPage() {
                   ))}
                   {investorPortfolio.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: muted, fontSize: '11px' }}>Aucun investissement pour l'instant</div>}
                 </Section>
-                <Section title="Liens">
-                  <LinksManager links={investorLinks} setLinks={setInvestorLinks} editing={editing} accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
+
+                <Section title="Liens" card={card} cardBorder={cardBorder} hint={hint}>
+                  <LinksManager links={investorLinks} setLinks={setInvestorLinks} editing={editing}
+                    accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
               </>
             )}
