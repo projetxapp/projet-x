@@ -152,7 +152,7 @@ export default function ChatPage() {
     setShowAttach(false)
     setLoadingMsgs(true)
 
-    // Réinitialiser unread dans le tableau immédiatement
+    // Mettre à jour unread dans le state local immédiatement
     setConversations(prev => prev.map(c =>
       c.id === conv.id ? { ...c, unread: 0 } : c
     ))
@@ -164,13 +164,12 @@ export default function ChatPage() {
     setMessages(msgs || [])
     setLoadingMsgs(false)
 
-    // Marquer comme lus les messages reçus
+    // Marquer comme lus en base
     await supabase.from('messages').update({ seen: true })
       .eq('match_id', conv.matchId)
       .neq('sender_id', currentUserIdRef.current)
       .eq('seen', false)
 
-    // Realtime
     if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
     const channel = supabase.channel(`messages-${conv.matchId}`)
       .on('postgres_changes', {
@@ -252,13 +251,13 @@ export default function ChatPage() {
       <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-        {/* Header */}
         <div style={{ padding: '36px 16px 12px', background: card, borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          <button onClick={async () => {
-  setActiveConv(null)
-  if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
-  await loadConversations(currentUserIdRef.current)
-}}
+          {/* ← RETOUR : PAS DE RELOAD, juste fermer la conv */}
+          <button
+            onClick={() => {
+              setActiveConv(null)
+              if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
+            }}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={cfg.accentLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -277,7 +276,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {loadingMsgs && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -338,7 +336,6 @@ export default function ChatPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Pièces jointes */}
         {showAttach && (
           <div style={{ background: card, borderTop: `1px solid ${cardBorder}`, padding: '14px 16px', display: 'flex', gap: '16px', justifyContent: 'center', flexShrink: 0 }}>
             {[{ icon: '📷', label: 'Photo' }, { icon: '📄', label: 'Fichier' }, { icon: '📊', label: 'Deck' }].map((item, i) => (
@@ -351,7 +348,6 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Input */}
         <div style={{ padding: '10px 12px 16px', background: card, borderTop: `1px solid ${cardBorder}`, display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <button onClick={() => setShowAttach(!showAttach)}
             style={{ width: 36, height: 36, borderRadius: '50%', background: showAttach ? cfg.accentBg : surface, border: `1px solid ${showAttach ? cfg.accent : cardBorder}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -400,7 +396,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Filtres par mode */}
         <div style={{ display: 'flex', gap: '5px', marginBottom: '10px', overflowX: 'auto' }}>
           <button onClick={() => setShowAll(true)}
             style={{ padding: '4px 10px', borderRadius: '20px', border: `1px solid ${showAll ? cfg.accent : cardBorder}`, background: showAll ? cfg.accentBg : 'transparent', color: showAll ? cfg.accentLight : muted, fontSize: '10px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 }}>
@@ -431,7 +426,6 @@ export default function ChatPage() {
           })}
         </div>
 
-        {/* Recherche */}
         <div style={{ position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
@@ -472,7 +466,6 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            {/* Bulles nouveaux messages */}
             {filtered.some(c => c.unread > 0) && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Nouveaux messages 🔥</div>
@@ -495,7 +488,6 @@ export default function ChatPage() {
               </div>
             )}
 
-            {/* Liste conversations */}
             {filtered.map(c => {
               const isNew = c.unread > 0
               return (
@@ -538,7 +530,6 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
           <div key={item.id} onClick={() => window.location.href = item.href}
