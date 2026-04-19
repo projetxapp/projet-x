@@ -79,7 +79,7 @@ export default function HomePage() {
       const name = localStorage.getItem('px_firstName') || ''
       setFirstName(name)
 
-      // Charger les matches avec infos de l'autre utilisateur
+      // Charger les matches
       const { data: matchData } = await supabase
         .from('matches').select('*')
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
@@ -87,24 +87,58 @@ export default function HomePage() {
         .limit(10)
 
       if (matchData && matchData.length > 0) {
+        // Compter les vrais non lus (messages reçus, non vus)
+        let totalUnread = 0
+        for (const match of matchData) {
+          const { count } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('match_id', match.id)
+            .neq('sender_id', user.id)
+            .eq('seen', false)
+          totalUnread += count || 0
+        }
+        setUnreadCount(totalUnread)
+
+        // Enrichir les matches
         const enriched = await Promise.all(matchData.map(async (match: any) => {
           const otherId = match.user1_id === user.id ? match.user2_id : match.user1_id
-          const { data: profile } = await supabase.from('profiles').select('id, first_name, last_name, avatar_url, city').eq('id', otherId).single()
 
-          // Récupérer le dernier message
-          const { data: lastMsg } = await supabase.from('messages').select('content, created_at, seen, sender_id').eq('match_id', match.id).order('created_at', { ascending: false }).limit(1)
+          const { data: profile } = await supabase
+            .from('profiles').select('id, first_name, last_name, avatar_url, city')
+            .eq('id', otherId).single()
 
-          // Compter les non lus
-          const { count: unread } = await supabase.from('messages').select('*', { count: 'exact', head: true }).eq('match_id', match.id).neq('sender_id', user.id).eq('seen', false)
+          const { data: lastMsgArr } = await supabase
+            .from('messages').select('content, created_at, seen, sender_id')
+            .eq('match_id', match.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
 
-          // Récupérer infos du profil (talent ou project)
+          const { count: unread } = await supabase
+            .from('messages').select('*', { count: 'exact', head: true })
+            .eq('match_id', match.id)
+            .neq('sender_id', user.id)
+            .eq('seen', false)
+
+          const lastMsg = lastMsgArr?.[0]
+          const lastMsgIsMe = lastMsg?.sender_id === user.id
+
           let subtitle = ''
           let tags: string[] = []
-          const { data: talentP } = await supabase.from('talent_profiles').select('statut, skills').eq('user_id', otherId).single()
-          if (talentP) { subtitle = talentP.statut || ''; tags = talentP.skills?.slice(0, 3) || [] }
-          else {
-            const { data: projectP } = await supabase.from('project_profiles').select('project_name, stage, sectors').eq('user_id', otherId).single()
-            if (projectP) { subtitle = `${projectP.project_name || 'Projet'} · ${projectP.stage || ''}`; tags = projectP.sectors?.slice(0, 2) || [] }
+          const { data: talentP } = await supabase
+            .from('talent_profiles').select('statut, skills')
+            .eq('user_id', otherId).single()
+          if (talentP) {
+            subtitle = talentP.statut || ''
+            tags = talentP.skills?.slice(0, 3) || []
+          } else {
+            const { data: projectP } = await supabase
+              .from('project_profiles').select('project_name, stage, sectors')
+              .eq('user_id', otherId).single()
+            if (projectP) {
+              subtitle = `${projectP.project_name || 'Projet'} · ${projectP.stage || ''}`
+              tags = projectP.sectors?.slice(0, 2) || []
+            }
           }
 
           return {
@@ -113,22 +147,22 @@ export default function HomePage() {
             firstName: profile?.first_name || 'Utilisateur',
             lastName: profile?.last_name || '',
             photo: profile?.avatar_url || `https://i.pravatar.cc/150?u=${otherId}`,
-            city: profile?.city || '',
             subtitle,
             tags,
-            lastMsg: lastMsg?.[0]?.content || '',
-            lastMsgTime: lastMsg?.[0]?.created_at || match.created_at,
+            lastMsg: lastMsg?.content || '',
+            lastMsgIsMe,
+            lastMsgTime: lastMsg?.created_at || match.created_at,
             unread: unread || 0,
-            isMe: lastMsg?.[0]?.sender_id === user.id,
             score: Math.floor(Math.random() * 20) + 78,
           }
         }))
         setMatches(enriched)
-        setUnreadCount(enriched.reduce((acc, m) => acc + m.unread, 0))
       }
 
       // Complétion du profil
-      const { data: talentProf } = await supabase.from('talent_profiles').select('bio, skills').eq('user_id', user.id).single()
+      const { data: talentProf } = await supabase
+        .from('talent_profiles').select('bio, skills')
+        .eq('user_id', user.id).single()
       if (talentProf) {
         let comp = 0
         if (talentProf.bio?.trim()) comp += 50
@@ -145,12 +179,16 @@ export default function HomePage() {
   const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Salut' : 'Bonsoir'
 
   const navItems = [
-    { id: 'home', href: '/home', active: true }, { id: 'chat', href: '/chat' },
-    { id: 'swipe', href: '/swipe' }, { id: 'explorer', href: '/explorer' }, { id: 'profil', href: '/profil' },
+    { id: 'home', href: '/home', active: true },
+    { id: 'chat', href: '/chat' },
+    { id: 'swipe', href: '/swipe' },
+    { id: 'explorer', href: '/explorer' },
+    { id: 'profil', href: '/profil' },
   ]
 
   return (
     <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', transition: 'background 0.3s' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
       <div style={{ padding: '44px 20px 12px', flexShrink: 0 }}>
@@ -165,7 +203,8 @@ export default function HomePage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button onClick={() => setDark(!dark)} style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={() => setDark(!dark)}
+              style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {dark ? '☀️' : '🌙'}
             </button>
             <div onClick={() => window.location.href = '/profil'} style={{ position: 'relative', cursor: 'pointer' }}>
@@ -180,17 +219,19 @@ export default function HomePage() {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 8px' }}>
-
         {!hasMode ? (
           <div style={{ background: card, border: `1px solid rgba(109,40,217,0.2)`, borderRadius: '20px', padding: '28px 20px', textAlign: 'center', margin: '8px 0' }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>{activeMode === 'talent' ? '⚡' : activeMode === 'project' ? '🚀' : '💎'}</div>
             <div style={{ fontSize: '16px', fontWeight: '800', color: text, marginBottom: '8px' }}>Profil non créé</div>
             <div style={{ fontSize: '13px', color: muted, marginBottom: '20px' }}>Active ce profil pour voir les recommandations.</div>
-            <button onClick={() => activateMode(activeMode)} style={{ width: '100%', padding: '13px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>Créer mon profil</button>
+            <button onClick={() => activateMode(activeMode)}
+              style={{ width: '100%', padding: '13px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+              Créer mon profil
+            </button>
           </div>
         ) : (
           <>
-            {/* Complétion profil */}
+            {/* Barre complétion */}
             {profileCompletion < 100 && (
               <div onClick={() => window.location.href = '/profil'}
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: card, borderRadius: '16px', border: `1px solid ${cfg.accent}30`, marginBottom: '12px', cursor: 'pointer' }}>
@@ -230,14 +271,13 @@ export default function HomePage() {
             {loadingMatches ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid ${cfg.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
               </div>
             ) : matches.length === 0 ? (
               <div style={{ background: card, borderRadius: '20px', border: `1px solid ${cardBorder}`, padding: '28px 20px', textAlign: 'center' }}>
                 <div style={{ fontSize: '40px', marginBottom: '12px' }}>💫</div>
                 <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>Pas encore de matches</div>
                 <div style={{ fontSize: '13px', color: muted, marginBottom: '20px', lineHeight: 1.5 }}>
-                  Swipe des profils pour commencer à matcher et découvrir des opportunités.
+                  Swipe des profils pour commencer à matcher.
                 </div>
                 <button onClick={() => window.location.href = '/swipe'}
                   style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
@@ -259,7 +299,7 @@ export default function HomePage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {matches.map((m, i) => (
+                  {matches.map(m => (
                     <div key={m.matchId} onClick={() => window.location.href = `/chat?match=${m.matchId}`}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: card, borderRadius: '18px', border: `1px solid ${m.unread > 0 ? cfg.accent + '40' : cardBorder}`, cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'all 0.15s' }}
                       onMouseEnter={e => (e.currentTarget.style.borderColor = cfg.accent + '60')}
@@ -281,7 +321,7 @@ export default function HomePage() {
                         {m.subtitle && <div style={{ fontSize: '11px', color: muted, marginBottom: '4px' }}>{m.subtitle}</div>}
                         {m.lastMsg ? (
                           <div style={{ fontSize: '11px', color: m.unread > 0 ? text : muted, fontWeight: m.unread > 0 ? '600' : '400', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                            {m.isMe ? '↗ ' : ''}{m.lastMsg}
+                            {m.lastMsgIsMe ? <span style={{ color: muted }}>Toi : </span> : null}{m.lastMsg}
                           </div>
                         ) : (
                           <div style={{ fontSize: '11px', color: cfg.accentLight, fontStyle: 'italic', fontWeight: '500' }}>
@@ -322,7 +362,8 @@ export default function HomePage() {
       {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
-          <div key={item.id} onClick={() => window.location.href = item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1, position: 'relative' }}>
+          <div key={item.id} onClick={() => window.location.href = item.href}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1, position: 'relative' }}>
             {item.id === 'swipe' ? (
               <>
                 <div style={{ width: 38, height: 38, borderRadius: '50%', border: `2px solid ${cfg.accent}`, background: cfg.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 16px ${cfg.accent}40` }}>

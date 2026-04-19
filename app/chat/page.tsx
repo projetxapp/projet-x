@@ -254,7 +254,11 @@ export default function ChatPage() {
 
         {/* Header */}
         <div style={{ padding: '36px 16px 12px', background: card, borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          <button onClick={() => { setActiveConv(null); if (realtimeRef.current) supabase.removeChannel(realtimeRef.current) }}
+          <button onClick={async () => {
+  setActiveConv(null)
+  if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
+  await loadConversations(currentUserIdRef.current)
+}}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={cfg.accentLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
