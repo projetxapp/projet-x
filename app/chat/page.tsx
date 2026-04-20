@@ -50,6 +50,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const realtimeRef = useRef<any>(null)
   const currentUserIdRef = useRef('')
+  // Empêche le useEffect URL de s'exécuter en boucle
+  const urlHandledRef = useRef(false)
 
   const bg = dark ? '#0D0C18' : '#F4F2FF'
   const card = dark ? '#16152A' : '#FFFFFF'
@@ -72,14 +74,17 @@ export default function ChatPage() {
     init()
   }, [])
 
-  // Auto-ouvrir conv depuis ?match=
+  // Auto-ouvrir conv depuis ?match= — une seule fois
   useEffect(() => {
-    if (!conversations.length || !currentUserId) return
+    if (!conversations.length || !currentUserId || urlHandledRef.current) return
     const params = new URLSearchParams(window.location.search)
     const matchId = params.get('match')
     if (matchId) {
       const conv = conversations.find(c => c.matchId === matchId)
-      if (conv) openConversation(conv)
+      if (conv) {
+        urlHandledRef.current = true
+        openConversation(conv)
+      }
     }
   }, [conversations, currentUserId])
 
@@ -100,7 +105,6 @@ export default function ChatPage() {
       const enriched = await Promise.all(matchData.map(async (match: any) => {
         const isUser1 = match.user1_id === uid
         const otherId = isUser1 ? match.user2_id : match.user1_id
-        // myMode = mode du current user au moment du match
         const myMode = isUser1 ? match.mode1 : match.mode2
 
         const { data: profile } = await supabase
@@ -152,8 +156,7 @@ export default function ChatPage() {
   async function openConversation(conv: any) {
     const uid = currentUserIdRef.current
 
-    // ÉTAPE 1 : Marquer comme lus EN BASE en premier
-    // Comme ça quand on recharge, Supabase retourne unread=0
+    // 1. Marquer comme lus EN BASE en premier
     if (uid) {
       await supabase.from('messages')
         .update({ seen: true })
@@ -162,12 +165,12 @@ export default function ChatPage() {
         .eq('seen', false)
     }
 
-    // ÉTAPE 2 : Mettre à jour le state local immédiatement
+    // 2. Mettre à jour le state local
     setConversations(prev => prev.map(c =>
       c.id === conv.id ? { ...c, unread: 0 } : c
     ))
 
-    // ÉTAPE 3 : Afficher la conv
+    // 3. Afficher la conv
     setActiveConv(conv)
     setShowAttach(false)
     setLoadingMsgs(true)
@@ -179,7 +182,7 @@ export default function ChatPage() {
     setMessages(msgs || [])
     setLoadingMsgs(false)
 
-    // ÉTAPE 4 : Realtime
+    // 4. Realtime
     if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
     const channel = supabase.channel(`messages-${conv.matchId}`)
       .on('postgres_changes', {
@@ -187,7 +190,6 @@ export default function ChatPage() {
         filter: `match_id=eq.${conv.matchId}`,
       }, (payload: any) => {
         setMessages(prev => [...prev, payload.new])
-        // Marquer lu automatiquement si message reçu
         if (payload.new.sender_id !== currentUserIdRef.current) {
           supabase.from('messages').update({ seen: true }).eq('id', payload.new.id)
         }
@@ -197,7 +199,6 @@ export default function ChatPage() {
   }
 
   function closeConversation() {
-    // PAS de reload — le state local est déjà à jour
     setActiveConv(null)
     if (realtimeRef.current) {
       supabase.removeChannel(realtimeRef.current)
@@ -249,7 +250,6 @@ export default function ChatPage() {
     return () => { if (realtimeRef.current) supabase.removeChannel(realtimeRef.current) }
   }, [])
 
-  // Filtrage : myMode = mode avec lequel j'ai matché
   const filtered = conversations.filter(c => {
     const matchSearch = search === '' || `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase())
     const matchMode = showAll || c.myMode === activeMode
@@ -272,7 +272,6 @@ export default function ChatPage() {
       <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-        {/* Header */}
         <div style={{ padding: '36px 16px 12px', background: card, borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
           <button onClick={closeConversation} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -290,7 +289,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {loadingMsgs && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -322,11 +320,9 @@ export default function ChatPage() {
           )}
 
           {messages.map((msg: any) => {
-            // mine = message envoyé par moi
             const mine = msg.sender_id === currentUserIdRef.current
             return (
               <div key={msg.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
-                {/* Photo de l'autre uniquement pour ses messages */}
                 {!mine && (
                   <img src={activeConv.photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 )}
@@ -353,7 +349,6 @@ export default function ChatPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Pièces jointes */}
         {showAttach && (
           <div style={{ background: card, borderTop: `1px solid ${cardBorder}`, padding: '14px 16px', display: 'flex', gap: '16px', justifyContent: 'center', flexShrink: 0 }}>
             {[{ icon: '📷', label: 'Photo' }, { icon: '📄', label: 'Fichier' }, { icon: '📊', label: 'Deck' }].map((item, i) => (
@@ -366,7 +361,6 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Input */}
         <div style={{ padding: '10px 12px 16px', background: card, borderTop: `1px solid ${cardBorder}`, display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <button onClick={() => setShowAttach(!showAttach)}
             style={{ width: 36, height: 36, borderRadius: '50%', background: showAttach ? cfg.accentBg : surface, border: `1px solid ${showAttach ? cfg.accent : cardBorder}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -413,7 +407,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Filtres */}
         <div style={{ display: 'flex', gap: '5px', marginBottom: '10px', overflowX: 'auto' }}>
           <button onClick={() => setShowAll(true)}
             style={{ padding: '4px 10px', borderRadius: '20px', border: `1px solid ${showAll ? cfg.accent : cardBorder}`, background: showAll ? cfg.accentBg : 'transparent', color: showAll ? cfg.accentLight : muted, fontSize: '10px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 }}>
@@ -444,7 +437,6 @@ export default function ChatPage() {
           })}
         </div>
 
-        {/* Recherche */}
         <div style={{ position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
@@ -479,7 +471,6 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            {/* Bulles nouveaux messages */}
             {filtered.some(c => c.unread > 0) && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Nouveaux messages 🔥</div>
@@ -502,7 +493,6 @@ export default function ChatPage() {
               </div>
             )}
 
-            {/* Liste */}
             {filtered.map(c => {
               const isNew = c.unread > 0
               return (
@@ -545,7 +535,6 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
           <div key={item.id} onClick={() => window.location.href = item.href}
