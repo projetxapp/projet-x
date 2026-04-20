@@ -72,6 +72,7 @@ export default function ChatPage() {
     init()
   }, [])
 
+  // Auto-ouvrir conv depuis ?match=
   useEffect(() => {
     if (!conversations.length || !currentUserId) return
     const params = new URLSearchParams(window.location.search)
@@ -99,6 +100,7 @@ export default function ChatPage() {
       const enriched = await Promise.all(matchData.map(async (match: any) => {
         const isUser1 = match.user1_id === uid
         const otherId = isUser1 ? match.user2_id : match.user1_id
+        // myMode = mode du current user au moment du match
         const myMode = isUser1 ? match.mode1 : match.mode2
 
         const { data: profile } = await supabase
@@ -148,14 +150,27 @@ export default function ChatPage() {
   }
 
   async function openConversation(conv: any) {
-    setActiveConv(conv)
-    setShowAttach(false)
-    setLoadingMsgs(true)
+    const uid = currentUserIdRef.current
 
-    // Mettre à jour unread dans le state local immédiatement
+    // ÉTAPE 1 : Marquer comme lus EN BASE en premier
+    // Comme ça quand on recharge, Supabase retourne unread=0
+    if (uid) {
+      await supabase.from('messages')
+        .update({ seen: true })
+        .eq('match_id', conv.matchId)
+        .neq('sender_id', uid)
+        .eq('seen', false)
+    }
+
+    // ÉTAPE 2 : Mettre à jour le state local immédiatement
     setConversations(prev => prev.map(c =>
       c.id === conv.id ? { ...c, unread: 0 } : c
     ))
+
+    // ÉTAPE 3 : Afficher la conv
+    setActiveConv(conv)
+    setShowAttach(false)
+    setLoadingMsgs(true)
 
     const { data: msgs } = await supabase
       .from('messages').select('*')
@@ -164,12 +179,7 @@ export default function ChatPage() {
     setMessages(msgs || [])
     setLoadingMsgs(false)
 
-    // Marquer comme lus en base
-    await supabase.from('messages').update({ seen: true })
-      .eq('match_id', conv.matchId)
-      .neq('sender_id', currentUserIdRef.current)
-      .eq('seen', false)
-
+    // ÉTAPE 4 : Realtime
     if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
     const channel = supabase.channel(`messages-${conv.matchId}`)
       .on('postgres_changes', {
@@ -177,12 +187,22 @@ export default function ChatPage() {
         filter: `match_id=eq.${conv.matchId}`,
       }, (payload: any) => {
         setMessages(prev => [...prev, payload.new])
+        // Marquer lu automatiquement si message reçu
         if (payload.new.sender_id !== currentUserIdRef.current) {
           supabase.from('messages').update({ seen: true }).eq('id', payload.new.id)
         }
       })
       .subscribe()
     realtimeRef.current = channel
+  }
+
+  function closeConversation() {
+    // PAS de reload — le state local est déjà à jour
+    setActiveConv(null)
+    if (realtimeRef.current) {
+      supabase.removeChannel(realtimeRef.current)
+      realtimeRef.current = null
+    }
   }
 
   async function sendMessage(text?: string) {
@@ -229,6 +249,7 @@ export default function ChatPage() {
     return () => { if (realtimeRef.current) supabase.removeChannel(realtimeRef.current) }
   }, [])
 
+  // Filtrage : myMode = mode avec lequel j'ai matché
   const filtered = conversations.filter(c => {
     const matchSearch = search === '' || `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase())
     const matchMode = showAll || c.myMode === activeMode
@@ -251,31 +272,25 @@ export default function ChatPage() {
       <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
+        {/* Header */}
         <div style={{ padding: '36px 16px 12px', background: card, borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          {/* ← RETOUR : PAS DE RELOAD, juste fermer la conv */}
-          <button
-            onClick={() => {
-              setActiveConv(null)
-              if (realtimeRef.current) supabase.removeChannel(realtimeRef.current)
-            }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+          <button onClick={closeConversation} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={cfg.accentLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <div style={{ position: 'relative' }}>
-            <img src={activeConv.photo} alt="" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${cfg.accent}` }} />
-          </div>
+          <img src={activeConv.photo} alt="" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${cfg.accent}`, flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '14px', fontWeight: '700', color: text }}>{activeConv.firstName} {activeConv.lastName}</div>
             <div style={{ fontSize: '10px', color: muted }}>{activeConv.score}% compatibilité</div>
           </div>
           <button onClick={() => window.location.href = `/profil/${activeConv.userId}`}
-            style={{ padding: '6px 12px', background: cfg.accentBg, border: `1px solid ${cfg.accent}40`, borderRadius: '20px', color: cfg.accentLight, fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>
+            style={{ padding: '6px 12px', background: cfg.accentBg, border: `1px solid ${cfg.accent}40`, borderRadius: '20px', color: cfg.accentLight, fontSize: '11px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 }}>
             Voir profil
           </button>
         </div>
 
+        {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {loadingMsgs && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -307,9 +322,11 @@ export default function ChatPage() {
           )}
 
           {messages.map((msg: any) => {
+            // mine = message envoyé par moi
             const mine = msg.sender_id === currentUserIdRef.current
             return (
               <div key={msg.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
+                {/* Photo de l'autre uniquement pour ses messages */}
                 {!mine && (
                   <img src={activeConv.photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 )}
@@ -336,6 +353,7 @@ export default function ChatPage() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Pièces jointes */}
         {showAttach && (
           <div style={{ background: card, borderTop: `1px solid ${cardBorder}`, padding: '14px 16px', display: 'flex', gap: '16px', justifyContent: 'center', flexShrink: 0 }}>
             {[{ icon: '📷', label: 'Photo' }, { icon: '📄', label: 'Fichier' }, { icon: '📊', label: 'Deck' }].map((item, i) => (
@@ -348,6 +366,7 @@ export default function ChatPage() {
           </div>
         )}
 
+        {/* Input */}
         <div style={{ padding: '10px 12px 16px', background: card, borderTop: `1px solid ${cardBorder}`, display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <button onClick={() => setShowAttach(!showAttach)}
             style={{ width: 36, height: 36, borderRadius: '50%', background: showAttach ? cfg.accentBg : surface, border: `1px solid ${showAttach ? cfg.accent : cardBorder}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -364,9 +383,7 @@ export default function ChatPage() {
             onFocus={e => (e.currentTarget.style.borderColor = cfg.accent)}
             onBlur={e => (e.currentTarget.style.borderColor = cardBorder)}
           />
-          <button
-            onClick={() => sendMessage()}
-            disabled={sending || !input.trim()}
+          <button onClick={() => sendMessage()} disabled={sending || !input.trim()}
             style={{ width: 36, height: 36, borderRadius: '50%', background: input.trim() ? cfg.gradient : surface, border: 'none', cursor: input.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
               <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke={input.trim() ? 'white' : muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -396,6 +413,7 @@ export default function ChatPage() {
           </button>
         </div>
 
+        {/* Filtres */}
         <div style={{ display: 'flex', gap: '5px', marginBottom: '10px', overflowX: 'auto' }}>
           <button onClick={() => setShowAll(true)}
             style={{ padding: '4px 10px', borderRadius: '20px', border: `1px solid ${showAll ? cfg.accent : cardBorder}`, background: showAll ? cfg.accentBg : 'transparent', color: showAll ? cfg.accentLight : muted, fontSize: '10px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 }}>
@@ -426,18 +444,15 @@ export default function ChatPage() {
           })}
         </div>
 
+        {/* Recherche */}
         <div style={{ position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
             <circle cx="11" cy="11" r="8" stroke={muted} strokeWidth="2" />
             <path d="M21 21L16.65 16.65" stroke={muted} strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher..."
-            style={{ width: '100%', padding: '10px 14px 10px 35px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '12px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
-          />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..."
+            style={{ width: '100%', padding: '10px 14px 10px 35px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '12px', color: text, fontSize: '12px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
         </div>
       </div>
 
@@ -453,9 +468,7 @@ export default function ChatPage() {
               {conversations.length === 0 ? 'Pas encore de conversations' : 'Aucun match dans cette catégorie'}
             </div>
             <div style={{ fontSize: '12px', color: muted, lineHeight: 1.6, marginBottom: '20px' }}>
-              {conversations.length === 0
-                ? 'Swipe des profils pour obtenir des matches !'
-                : 'Swipe en mode ' + activeMode + ' pour avoir des matches ici'}
+              {conversations.length === 0 ? 'Swipe des profils pour obtenir des matches !' : `Swipe en mode ${activeMode} pour avoir des matches ici`}
             </div>
             {conversations.length === 0 && (
               <button onClick={() => window.location.href = '/swipe'}
@@ -466,6 +479,7 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
+            {/* Bulles nouveaux messages */}
             {filtered.some(c => c.unread > 0) && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Nouveaux messages 🔥</div>
@@ -488,6 +502,7 @@ export default function ChatPage() {
               </div>
             )}
 
+            {/* Liste */}
             {filtered.map(c => {
               const isNew = c.unread > 0
               return (
@@ -530,6 +545,7 @@ export default function ChatPage() {
         )}
       </div>
 
+      {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
           <div key={item.id} onClick={() => window.location.href = item.href}
