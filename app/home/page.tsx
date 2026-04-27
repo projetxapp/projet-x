@@ -9,19 +9,19 @@ const MODE_CONFIG = {
     accent: '#6D28D9', accentLight: '#A78BFA', accentBg: 'rgba(109,40,217,0.12)',
     gradient: 'linear-gradient(135deg, #6D28D9, #8B5CF6)',
     swipeLabel: 'Swipe des projets', swipeSub: 'projets qui te correspondent',
-    feedTitle: 'Tes matches récents', emptySwipe: 'Prêt à rejoindre un projet ? ⚡',
+    feedTitle: 'Tes derniers matches', emptySwipe: 'Prêt à rejoindre un projet ? ⚡',
   },
   project: {
     accent: '#0891B2', accentLight: '#22D3EE', accentBg: 'rgba(8,145,178,0.12)',
     gradient: 'linear-gradient(135deg, #0891B2, #06B6D4)',
     swipeLabel: 'Swipe des talents', swipeSub: 'talents disponibles',
-    feedTitle: 'Tes matches récents', emptySwipe: 'Trouve ton équipe de rêve 🚀',
+    feedTitle: 'Tes derniers matches', emptySwipe: 'Trouve ton équipe de rêve 🚀',
   },
   investor: {
     accent: '#B45309', accentLight: '#FCD34D', accentBg: 'rgba(180,83,9,0.12)',
     gradient: 'linear-gradient(135deg, #B45309, #F59E0B)',
     swipeLabel: 'Swipe des projets', swipeSub: 'projets à fort potentiel',
-    feedTitle: 'Tes matches récents', emptySwipe: 'De nouvelles pépites t\'attendent 💎',
+    feedTitle: 'Tes derniers matches', emptySwipe: 'De nouvelles pépites t\'attendent 💎',
   },
 }
 
@@ -52,8 +52,8 @@ function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string
 export default function HomePage() {
   const { activeMode, userModes, activateMode, dark, setDark } = useMode()
   const [firstName, setFirstName] = useState('')
-  const [userId, setUserId] = useState('')
   const [matches, setMatches] = useState<any[]>([])
+  const [totalMatches, setTotalMatches] = useState(0)
   const [unreadCount, setUnreadCount] = useState(0)
   const [loadingMatches, setLoadingMatches] = useState(true)
   const [profileCompletion, setProfileCompletion] = useState(0)
@@ -74,42 +74,34 @@ export default function HomePage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
-      setUserId(user.id)
 
-      const name = localStorage.getItem('px_firstName') || ''
-      setFirstName(name)
+      setFirstName(localStorage.getItem('px_firstName') || '')
 
-      // Charger les matches
+      // Compter le total des matches
+      const { count: total } = await supabase
+        .from('matches').select('*', { count: 'exact', head: true })
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+      setTotalMatches(total || 0)
+
+      // Charger seulement les 3 derniers matches
       const { data: matchData } = await supabase
         .from('matches').select('*')
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(10)
+        .limit(3)
 
       if (matchData && matchData.length > 0) {
-        // Compter les vrais non lus (messages reçus, non vus)
         let totalUnread = 0
-        for (const match of matchData) {
-          const { count } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('match_id', match.id)
-            .neq('sender_id', user.id)
-            .eq('seen', false)
-          totalUnread += count || 0
-        }
-        setUnreadCount(totalUnread)
 
-        // Enrichir les matches
         const enriched = await Promise.all(matchData.map(async (match: any) => {
           const otherId = match.user1_id === user.id ? match.user2_id : match.user1_id
 
           const { data: profile } = await supabase
-            .from('profiles').select('id, first_name, last_name, avatar_url, city')
+            .from('profiles').select('id, first_name, last_name, avatar_url')
             .eq('id', otherId).single()
 
           const { data: lastMsgArr } = await supabase
-            .from('messages').select('content, created_at, seen, sender_id')
+            .from('messages').select('content, created_at, sender_id')
             .eq('match_id', match.id)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -119,6 +111,8 @@ export default function HomePage() {
             .eq('match_id', match.id)
             .neq('sender_id', user.id)
             .eq('seen', false)
+
+          totalUnread += unread || 0
 
           const lastMsg = lastMsgArr?.[0]
           const lastMsgIsMe = lastMsg?.sender_id === user.id
@@ -151,12 +145,13 @@ export default function HomePage() {
             tags,
             lastMsg: lastMsg?.content || '',
             lastMsgIsMe,
-            lastMsgTime: lastMsg?.created_at || match.created_at,
             unread: unread || 0,
             score: Math.floor(Math.random() * 20) + 78,
           }
         }))
+
         setMatches(enriched)
+        setUnreadCount(totalUnread)
       }
 
       // Complétion du profil
@@ -286,18 +281,26 @@ export default function HomePage() {
               </div>
             ) : (
               <>
+                {/* Titre section avec total */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ fontSize: '16px', fontWeight: '800', color: text }}>
-                    {cfg.feedTitle}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '800', color: text }}>{cfg.feedTitle}</div>
                     {unreadCount > 0 && (
-                      <span style={{ marginLeft: '8px', fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px', background: '#F97316', color: 'white' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px', background: '#F97316', color: 'white' }}>
                         {unreadCount} non lu{unreadCount > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
-                  <div onClick={() => window.location.href = '/chat'} style={{ fontSize: '12px', color: cfg.accentLight, cursor: 'pointer', fontWeight: '600' }}>Voir tout →</div>
+                  {/* Voir tout seulement si plus de 3 matches */}
+                  {totalMatches > 3 && (
+                    <div onClick={() => window.location.href = '/chat'}
+                      style={{ fontSize: '12px', color: cfg.accentLight, cursor: 'pointer', fontWeight: '600' }}>
+                      Voir les {totalMatches} →
+                    </div>
+                  )}
                 </div>
 
+                {/* 3 derniers matches */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {matches.map(m => (
                     <div key={m.matchId} onClick={() => window.location.href = `/chat?match=${m.matchId}`}
@@ -315,10 +318,16 @@ export default function HomePage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: m.unread > 0 ? '800' : '600', color: text }}>{m.firstName} {m.lastName}</div>
-                          <div style={{ fontSize: '10px', fontWeight: '700', color: m.score >= 90 ? '#F97316' : cfg.accentLight, flexShrink: 0 }}>{m.score}%</div>
+                          <div style={{ fontSize: '14px', fontWeight: m.unread > 0 ? '800' : '600', color: text }}>
+                            {m.firstName} {m.lastName}
+                          </div>
+                          <div style={{ fontSize: '10px', fontWeight: '700', color: m.score >= 90 ? '#F97316' : cfg.accentLight, flexShrink: 0 }}>
+                            {m.score}%
+                          </div>
                         </div>
-                        {m.subtitle && <div style={{ fontSize: '11px', color: muted, marginBottom: '4px' }}>{m.subtitle}</div>}
+                        {m.subtitle && (
+                          <div style={{ fontSize: '11px', color: muted, marginBottom: '4px' }}>{m.subtitle}</div>
+                        )}
                         {m.lastMsg ? (
                           <div style={{ fontSize: '11px', color: m.unread > 0 ? text : muted, fontWeight: m.unread > 0 ? '600' : '400', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                             {m.lastMsgIsMe ? <span style={{ color: muted }}>Toi : </span> : null}{m.lastMsg}
