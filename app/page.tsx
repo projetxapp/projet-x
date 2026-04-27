@@ -233,9 +233,6 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
   )
 }
 
-// Import useState ici car SkillsSelector l'utilise
-import { useState } from 'react'
-
 export default function OnboardingPage() {
   const [pageMode, setPageMode] = useState<PageMode>('welcome')
   const [step, setStep] = useState(0)
