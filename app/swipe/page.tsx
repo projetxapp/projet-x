@@ -81,7 +81,9 @@ export default function SwipePage() {
   async function loadProfiles(uid: string) {
     setLoadingCards(true)
     try {
-      const { data: swipedData } = await supabase.from('swipes').select('swiped_id').eq('swiper_id', uid).eq('swiper_mode', activeMode)
+      const { data: swipedData } = await supabase
+        .from('swipes').select('swiped_id')
+        .eq('swiper_id', uid).eq('swiper_mode', activeMode)
       const swipedIds = swipedData?.map(s => s.swiped_id) || []
 
       let merged: any[] = []
@@ -117,7 +119,7 @@ export default function SwipePage() {
             desc: p.description || p.founder_bio || 'Description en cours...',
             needs: p.needs || [], equity: p.equity || '', budget: p.budget || null,
             score: 75, modes: p.collab_modes || [], workMode: p.work_mode || 'Remote',
-            mrr: null, team: p.team_size || 1,
+            team: p.team_size || 1,
           }
         })
       }
@@ -151,15 +153,28 @@ export default function SwipePage() {
           .in('direction', ['like', 'super']).single()
 
         if (mutual) {
-          const { data: newMatch } = await supabase.from('matches').insert({
-            user1_id: userId, user2_id: profile.user_id,
-            mode1: activeMode, mode2: mutual.swiper_mode,
-          }).select().single()
+          // Chercher si une conv existe déjà entre ces deux users
+          const { data: existing } = await supabase.from('matches').select('id')
+            .or(`and(user1_id.eq.${userId},user2_id.eq.${profile.user_id}),and(user1_id.eq.${profile.user_id},user2_id.eq.${userId})`)
+            .single()
+
+          let matchId = existing?.id
+
+          if (!matchId) {
+            // Créer le match uniquement si inexistant
+            const { data: newMatch } = await supabase.from('matches').insert({
+              user1_id: userId,
+              user2_id: profile.user_id,
+              mode1: activeMode,
+              mode2: mutual.swiper_mode,
+            }).select().single()
+            matchId = newMatch?.id
+          }
 
           setMatchData({
             name: isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name,
-            photo: profile.photo,
-            matchId: newMatch?.id,
+            photo: isProjectMode ? profile.photo : profile.founderPhoto,
+            matchId,
           })
           setTimeout(() => setShowMatch(true), 380)
         }
@@ -189,13 +204,15 @@ export default function SwipePage() {
 
   const navItems = [
     { id: 'home', href: '/home' }, { id: 'chat', href: '/chat' },
-    { id: 'swipe', href: '/swipe', active: true }, { id: 'explorer', href: '/explorer' }, { id: 'profil', href: '/profil' },
+    { id: 'swipe', href: '/swipe', active: true }, { id: 'explorer', href: '/explorer' },
+    { id: 'profil', href: '/profil' },
   ]
 
   return (
     <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', transition: 'background 0.3s' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
+      {/* Header */}
       <div style={{ padding: '36px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: 28, height: 28, borderRadius: '8px', background: cfg.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>✦</div>
@@ -211,11 +228,12 @@ export default function SwipePage() {
 
       {!hasMode ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-          <div style={{ background: 'rgba(109,40,217,0.08)', border: '1px solid rgba(109,40,217,0.2)', borderRadius: '24px', padding: '32px 24px', textAlign: 'center', width: '100%' }}>
+          <div style={{ background: cfg.accentBg, border: `1px solid ${cfg.accent}30`, borderRadius: '24px', padding: '32px 24px', textAlign: 'center', width: '100%' }}>
             <div style={{ fontSize: '48px', marginBottom: '14px' }}>{activeMode === 'talent' ? '⚡' : activeMode === 'project' ? '🚀' : '💎'}</div>
             <div style={{ fontSize: '18px', fontWeight: '800', color: text, marginBottom: '8px' }}>Profil non créé</div>
             <div style={{ fontSize: '13px', color: muted, marginBottom: '24px' }}>Active ce profil pour swiper.</div>
-            <button onClick={() => window.location.href = '/profil'} style={{ width: '100%', padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+            <button onClick={() => window.location.href = '/profil'}
+              style={{ width: '100%', padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
               Créer mon profil
             </button>
           </div>
@@ -235,20 +253,24 @@ export default function SwipePage() {
             {cards.length === 0 ? 'Reviens quand de nouveaux utilisateurs s\'inscriront.' : 'Reviens plus tard pour de nouveaux profils.'}
           </div>
           {cards.length > 0 && (
-            <button onClick={() => { setCurrentIndex(0); loadProfiles(userId) }} style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+            <button onClick={() => { setCurrentIndex(0); loadProfiles(userId) }}
+              style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
               Recommencer
             </button>
           )}
         </div>
       ) : (
         <>
+          {/* Cards */}
           <div style={{ flex: 1, position: 'relative', padding: '0 12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Carte suivante */}
             {nextProfile && (
               <div style={{ position: 'absolute', width: 'calc(100% - 40px)', height: 'calc(100% - 20px)', borderRadius: '28px', overflow: 'hidden', transform: 'scale(0.93) translateY(12px)', zIndex: 1 }}>
                 <img src={nextProfile.photo || nextProfile.founderPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.5)' }} />
               </div>
             )}
 
+            {/* Carte principale */}
             <div
               onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
               onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
@@ -257,21 +279,21 @@ export default function SwipePage() {
               <img src={profile.photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)', pointerEvents: 'none' }} />
 
+              {/* Labels like/pass */}
               <div style={{ position: 'absolute', top: 28, left: 20, opacity: likeOp, transform: 'rotate(-12deg)', border: '3px solid #4ADE80', borderRadius: '10px', padding: '6px 14px', fontSize: '16px', fontWeight: '900', color: '#4ADE80', background: 'rgba(0,0,0,0.3)' }}>{likeLabel}</div>
               <div style={{ position: 'absolute', top: 28, right: 20, opacity: passOp, transform: 'rotate(12deg)', border: '3px solid #F87171', borderRadius: '10px', padding: '6px 14px', fontSize: '16px', fontWeight: '900', color: '#F87171', background: 'rgba(0,0,0,0.3)' }}>PASS</div>
 
+              {/* Score IA */}
               <div style={{ position: 'absolute', top: 20, right: 20, background: profile.score >= 90 ? 'rgba(249,115,22,0.9)' : 'rgba(109,40,217,0.9)', backdropFilter: 'blur(8px)', borderRadius: '12px', padding: '6px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '16px', fontWeight: '900', color: 'white', lineHeight: 1 }}>{profile.score}%</div>
                 <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Match IA</div>
               </div>
 
+              {/* Infos profil */}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 20px', pointerEvents: 'none' }}>
                 {isProjectMode ? (
                   <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                      <div style={{ fontSize: '26px', fontWeight: '900', color: 'white', letterSpacing: '-0.5px' }}>{profile.firstName} {profile.lastName}</div>
-                      {profile.online && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#4ADE80', border: '2px solid white' }} />}
-                    </div>
+                    <div style={{ fontSize: '26px', fontWeight: '900', color: 'white', letterSpacing: '-0.5px', marginBottom: '4px' }}>{profile.firstName} {profile.lastName}</div>
                     <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>{profile.poste}{profile.city ? ` · ${profile.city}` : ''}{profile.age ? `, ${profile.age} ans` : ''}</div>
                   </>
                 ) : (
@@ -293,7 +315,9 @@ export default function SwipePage() {
                   {(isProjectMode ? profile.skills : profile.needs)?.slice(0, 4).map((s: string, i: number) => (
                     <span key={i} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', borderRadius: '20px', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>{s}</span>
                   ))}
-                  {!isProjectMode && profile.equity && <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(74,222,128,0.25)', color: '#4ADE80' }}>💎 {profile.equity}</span>}
+                  {!isProjectMode && profile.equity && (
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(74,222,128,0.25)', color: '#4ADE80' }}>💎 {profile.equity}</span>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -319,29 +343,24 @@ export default function SwipePage() {
               style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(248,113,113,0.1)', border: `2px solid rgba(248,113,113,0.3)`, fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171', transition: 'transform 0.15s' }}>
               ✕
             </button>
-
-            {/* Bouton info — résumé du profil */}
             <button onClick={() => setShowInfo(true)}
               onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${cardBorder}`, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: muted, transition: 'transform 0.15s' }}>
               ℹ️
             </button>
-
             <button onClick={triggerLike}
               onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 66, height: 66, borderRadius: '50%', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', fontSize: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(109,40,217,0.5)', transition: 'transform 0.15s' }}>
               {isInvestorMode ? '💎' : '♥'}
             </button>
-
             <button onClick={triggerSuper}
               onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(34,211,238,0.08)', border: `1.5px solid rgba(34,211,238,0.3)`, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22D3EE', transition: 'transform 0.15s' }}>
               ★
             </button>
-
             <button onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
               onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
               onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
@@ -355,7 +374,8 @@ export default function SwipePage() {
       {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
-          <div key={item.id} onClick={() => window.location.href = item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
+          <div key={item.id} onClick={() => window.location.href = item.href}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
             {item.id === 'swipe' ? (
               <>
                 <div style={{ width: 38, height: 38, borderRadius: '50%', border: `2px solid ${cfg.accent}`, background: cfg.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -386,11 +406,17 @@ export default function SwipePage() {
           <div style={{ background: card, borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%' }} onClick={e => e.stopPropagation()}>
             <div style={{ width: 40, height: 4, borderRadius: '4px', background: cardBorder, margin: '0 auto 20px' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-              <img src={profile.photo} alt="" style={{ width: 56, height: 56, borderRadius: isProjectMode ? '14px' : '50%', objectFit: 'cover' }} />
+              <img src={isProjectMode ? profile.photo : profile.founderPhoto} alt="" style={{ width: 56, height: 56, borderRadius: isProjectMode ? '50%' : '14px', objectFit: 'cover' }} />
               <div>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: text }}>{isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name}</div>
-                <div style={{ fontSize: '12px', color: muted }}>{isProjectMode ? profile.poste : `${profile.founder} · ${profile.stage}`}</div>
-                <div style={{ fontSize: '13px', fontWeight: '800', color: profile.score >= 90 ? '#F97316' : cfg.accentLight, marginTop: '2px' }}>{profile.score}% de compatibilité</div>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: text }}>
+                  {isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name}
+                </div>
+                <div style={{ fontSize: '12px', color: muted }}>
+                  {isProjectMode ? profile.poste : `${profile.founder} · ${profile.stage}`}
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: '800', color: profile.score >= 90 ? '#F97316' : cfg.accentLight, marginTop: '2px' }}>
+                  {profile.score}% de compatibilité
+                </div>
               </div>
             </div>
             <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6, marginBottom: '14px' }}>
@@ -423,8 +449,12 @@ export default function SwipePage() {
             <div style={{ fontSize: '28px', fontWeight: '900', color: 'white', marginBottom: '10px' }}>
               {isInvestorMode ? 'Intérêt mutuel !' : 'C\'est un Match !'}
             </div>
-            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', marginBottom: '6px' }}>{matchData.name} et toi avez swipé mutuellement.</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '30px' }}>Le chat est maintenant ouvert 💬</div>
+            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', marginBottom: '6px' }}>
+              {matchData.name} et toi avez swipé mutuellement.
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '30px' }}>
+              Le chat est maintenant ouvert 💬
+            </div>
             <button onClick={() => {
               setShowMatch(false)
               window.location.href = matchData.matchId ? `/chat?match=${matchData.matchId}` : '/chat'
