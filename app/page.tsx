@@ -41,20 +41,19 @@ const ALL_SKILLS = [
   'FL Studio', 'Flask', 'Flutter', 'Framer', 'Front-end', 'Fundraising',
   'Game Design', 'Gestion de projet', 'Git', 'Go', 'Google Ads', 'Google Analytics',
   'Google Cloud', 'GraphQL', 'Ghostwriting', 'Guitare',
-  'HTML', 'Hubspot', 'Hardware',
-  'Illustration numérique', 'InDesign', 'Influence Marketing', 'Instagram', 'IoT',
-  'JavaScript', 'Journalisme', 'Judo', 'Kotlin', 'Kubernetes',
-  'LangChain', 'Laravel', 'Leadership', 'Lightroom', 'LinkedIn', 'LinkedIn Ads',
-  'Live streaming', 'Logic Pro', 'Logo design',
+  'HTML', 'Hubspot', 'Hardware', 'Illustration numérique', 'InDesign',
+  'Influence Marketing', 'Instagram', 'IoT', 'JavaScript', 'Journalisme', 'Judo',
+  'Kotlin', 'Kubernetes', 'LangChain', 'Laravel', 'Leadership', 'Lightroom',
+  'LinkedIn', 'LinkedIn Ads', 'Live streaming', 'Logic Pro', 'Logo design',
   'Machine Learning', 'Make', 'Management', 'Mannequin', 'Mannequin e-commerce',
   'Mannequin mode', 'Mannequin photo', 'Marketing', 'Mastering', 'Massage', 'Maya',
   'Méditation', 'Mixage audio', 'Mixologie', 'Mixpanel', 'MongoDB', 'Motion Design', 'MySQL',
   'n8n', 'Nail art', 'NestJS', 'Newsletter', 'NFT', 'NLP', 'Node.js', 'Notion', 'Nutrition',
-  'OpenAI API', 'OSINT', 'Packaging', 'Pandas', 'Pentest', 'Personal shopper', 'Personal training',
-  'PHP', 'Photographie', 'Photographie mariage', 'Photographie mode', 'Photographie portrait',
-  'Photographie produit', 'Photoshop', 'Piano', 'Pilates', 'Pixel Art', 'PNL',
-  'Podcast production', 'PostgreSQL', 'Power BI', 'Premiere Pro', 'Procreate',
-  'Product Management', 'Product Owner', 'Pro Tools', 'Prompt Engineering',
+  'OpenAI API', 'OSINT', 'Packaging', 'Pandas', 'Pentest', 'Personal shopper',
+  'Personal training', 'PHP', 'Photographie', 'Photographie mariage', 'Photographie mode',
+  'Photographie portrait', 'Photographie produit', 'Photoshop', 'Piano', 'Pilates',
+  'Pixel Art', 'PNL', 'Podcast production', 'PostgreSQL', 'Power BI', 'Premiere Pro',
+  'Procreate', 'Product Management', 'Product Owner', 'Pro Tools', 'Prompt Engineering',
   'Prospection B2B', 'PWA', 'PyTorch', 'Python', 'QA Testing', 'Rap',
   'React', 'React Native', 'Recrutement', 'Rédaction SEO', 'Rédaction web', 'Redis',
   'REST API', 'Retool', 'Retouche photo', 'RGPD', 'Ruby on Rails', 'Running', 'Rust',
@@ -64,8 +63,8 @@ const ALL_SKILLS = [
   'Storytelling', 'Studio photo', 'Supabase', 'Surf', 'Swift', 'SwiftUI',
   'Tableau', 'Tailwind CSS', 'Tatouage', 'TensorFlow', 'Théâtre', 'TikTok', 'TikTok Ads',
   'TikTok production', 'Trading crypto', 'Traduction FR/EN', 'Traduction FR/ES',
-  'TypeScript', 'Twitch', 'UI Design', 'Unity', 'Unreal Engine', 'UX Design', 'UX Research',
-  'UX Writing', 'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
+  'TypeScript', 'Twitch', 'UI Design', 'Unity', 'Unreal Engine', 'UX Design',
+  'UX Research', 'UX Writing', 'Vercel', 'VFX', 'Vidéographie', 'Violon', 'Vue.js', 'VR',
   'Web3', 'Webflow', 'WordPress', 'Yoga', 'YouTube', 'YouTube production', 'ZBrush', 'Zapier',
 ].sort()
 
@@ -103,7 +102,7 @@ const VILLES = [
   'Remote', 'International',
 ]
 
-type PageMode = 'welcome' | 'signup' | 'login'
+type PageMode = 'welcome' | 'signup' | 'login' | 'verify'
 type StepType = 'info' | 'roles' | 'talent' | 'project' | 'investor' | 'recap'
 
 function buildSteps(roles: string[]): StepType[] {
@@ -234,6 +233,9 @@ function SkillsSelector({ selected, onAdd, onRemove }: {
   )
 }
 
+// Import useState ici car SkillsSelector l'utilise
+import { useState } from 'react'
+
 export default function OnboardingPage() {
   const [pageMode, setPageMode] = useState<PageMode>('welcome')
   const [step, setStep] = useState(0)
@@ -296,7 +298,10 @@ export default function OnboardingPage() {
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email, password,
-        options: { data: { first_name: firstName, last_name: lastName } }
+        options: {
+          data: { first_name: firstName, last_name: lastName },
+          emailRedirectTo: 'https://projet-x-liart.vercel.app/confirm',
+        }
       })
       if (authError) throw authError
       const userId = authData.user?.id
@@ -330,7 +335,8 @@ export default function OnboardingPage() {
       localStorage.setItem('px_firstName', firstName)
       localStorage.setItem('px_userId', userId)
 
-      window.location.href = '/home'
+      // Afficher l'écran de vérification email
+      setPageMode('verify')
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue')
       setLoading(false)
@@ -417,6 +423,34 @@ export default function OnboardingPage() {
             En continuant tu acceptes nos <span style={{ color: '#A78BFA', cursor: 'pointer' }}>CGU</span> et notre <span style={{ color: '#A78BFA', cursor: 'pointer' }}>politique de confidentialité</span>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // ── VERIFY ──
+  if (pageMode === 'verify') {
+    return (
+      <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', padding: '32px', textAlign: 'center' }}>
+        <div style={{ width: 76, height: 76, borderRadius: '24px', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '34px', marginBottom: '28px', boxShadow: '0 20px 60px rgba(109,40,217,0.4)' }}>✦</div>
+        <div style={{ fontSize: '52px', marginBottom: '16px' }}>📧</div>
+        <div style={{ fontSize: '24px', fontWeight: '900', color: text, marginBottom: '10px', letterSpacing: '-0.5px' }}>Vérifie ton email</div>
+        <div style={{ fontSize: '14px', color: muted, marginBottom: '8px', lineHeight: 1.7 }}>
+          On a envoyé un lien de confirmation à
+        </div>
+        <div style={{ fontSize: '15px', fontWeight: '700', color: '#A78BFA', marginBottom: '28px' }}>{email}</div>
+        <div style={{ background: 'rgba(109,40,217,0.08)', border: '1px solid rgba(109,40,217,0.2)', borderRadius: '16px', padding: '16px 20px', marginBottom: '28px', width: '100%', maxWidth: '340px' }}>
+          <div style={{ fontSize: '12px', color: muted, lineHeight: 1.7 }}>
+            Clique sur le lien dans l'email pour activer ton compte. Vérifie aussi tes spams si tu ne le vois pas.
+          </div>
+        </div>
+        <button onClick={() => setPageMode('login')}
+          style={{ width: '100%', maxWidth: '340px', padding: '14px', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer', marginBottom: '12px' }}>
+          J'ai confirmé → Se connecter
+        </button>
+        <button onClick={() => finish()}
+          style={{ background: 'none', border: 'none', color: muted, fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}>
+          Renvoyer l'email
+        </button>
       </div>
     )
   }
@@ -527,7 +561,6 @@ export default function OnboardingPage() {
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
             </div>
-
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge</div>
@@ -559,7 +592,6 @@ export default function OnboardingPage() {
                 )}
               </div>
             </div>
-
             <div>
               <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</div>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inputStyle}
@@ -591,7 +623,7 @@ export default function OnboardingPage() {
               const active = selectedRoles.includes(role.id)
               return (
                 <div key={role.id} onClick={() => toggleRole(role.id)}
-                  style={{ padding: '16px 18px', borderRadius: '20px', border: `2px solid ${active ? role.border : cardBorder}`, background: active ? role.bg : surface, cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }}>
+                  style={{ padding: '16px 18px', borderRadius: '20px', border: `2px solid ${active ? role.border : cardBorder}`, background: active ? role.bg : surface, cursor: 'pointer', transition: 'all 0.2s' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <div style={{ width: 46, height: 46, borderRadius: '13px', background: active ? role.gradient : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, boxShadow: active ? `0 8px 24px ${role.glow}` : 'none' }}>
                       {role.emoji}
@@ -710,7 +742,6 @@ export default function OnboardingPage() {
               <div style={{ fontSize: '20px', fontWeight: '900', color: text, letterSpacing: '-0.5px' }}>Prêt, {firstName} ! 🎉</div>
               <div style={{ fontSize: '12px', color: muted, marginTop: '4px' }}>Tu pourras compléter ton profil à tout moment ✦</div>
             </div>
-
             <div style={{ background: surface, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px 16px' }}>
               <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>👤 Identité</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -719,7 +750,6 @@ export default function OnboardingPage() {
                 <div style={{ fontSize: '12px', color: muted }}>✉️ {email}</div>
               </div>
             </div>
-
             {selectedRoles.map(roleId => {
               const role = ROLES.find(r => r.id === roleId)!
               return (
@@ -727,13 +757,11 @@ export default function OnboardingPage() {
                   <div style={{ fontSize: '13px', fontWeight: '800', color: role.color, marginBottom: '10px' }}>{role.emoji} Profil {role.title}</div>
                   {roleId === 'talent' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {selectedSkills.length > 0 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '5px' }}>
-                          {selectedSkills.map(s => (
-                            <span key={s} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '20px', background: 'rgba(109,40,217,0.2)', color: '#A78BFA' }}>{s}</span>
-                          ))}
+                      {selectedSkills.length > 0
+                        ? <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '5px' }}>
+                          {selectedSkills.map(s => <span key={s} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '20px', background: 'rgba(109,40,217,0.2)', color: '#A78BFA' }}>{s}</span>)}
                         </div>
-                      ) : <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
+                        : <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
                       {selectedHours && <div style={{ fontSize: '12px', color: muted }}>🕐 {HOURS.find(h => h.id === selectedHours)?.label}</div>}
                     </div>
                   )}
@@ -745,8 +773,10 @@ export default function OnboardingPage() {
                     </div>
                   )}
                   {roleId === 'investor' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {investorTicket ? <div style={{ fontSize: '12px', color: muted }}>💰 {TICKETS.find(t => t.id === investorTicket)?.label}</div> : <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
+                    <div>
+                      {investorTicket
+                        ? <div style={{ fontSize: '12px', color: muted }}>💰 {TICKETS.find(t => t.id === investorTicket)?.label}</div>
+                        : <div style={{ fontSize: '12px', color: muted, fontStyle: 'italic' }}>À compléter dans ton profil</div>}
                     </div>
                   )}
                 </div>
@@ -759,7 +789,7 @@ export default function OnboardingPage() {
       <div style={{ padding: '12px 24px 28px', flexShrink: 0 }}>
         <button onClick={next} disabled={!canNext() || loading}
           style={{ width: '100%', padding: '16px', background: canNext() && !loading ? 'linear-gradient(135deg,#6D28D9,#0891B2)' : surface, border: canNext() && !loading ? 'none' : `1.5px solid ${cardBorder}`, borderRadius: '16px', color: canNext() && !loading ? 'white' : hint, fontSize: '15px', fontWeight: '800', cursor: canNext() && !loading ? 'pointer' : 'default', transition: 'all 0.2s', boxShadow: canNext() && !loading ? '0 8px 32px rgba(109,40,217,0.35)' : 'none' }}>
-          {loading ? '⏳ Création en cours...' : currentStepType === 'recap' ? 'Découvrir l\'app 🚀' : 'Continuer →'}
+          {loading ? '⏳ Création en cours...' : currentStepType === 'recap' ? 'Créer mon compte 🚀' : 'Continuer →'}
         </button>
       </div>
     </div>
