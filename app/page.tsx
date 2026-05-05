@@ -332,7 +332,6 @@ export default function OnboardingPage() {
       localStorage.setItem('px_firstName', firstName)
       localStorage.setItem('px_userId', userId)
 
-      // Afficher l'écran de vérification email
       setPageMode('verify')
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue')
@@ -417,7 +416,10 @@ export default function OnboardingPage() {
             </button>
           </div>
           <div style={{ marginTop: '20px', fontSize: '11px', color: hint, textAlign: 'center' }}>
-            En continuant tu acceptes nos <span style={{ color: '#A78BFA', cursor: 'pointer' }}>CGU</span> et notre <span style={{ color: '#A78BFA', cursor: 'pointer' }}>politique de confidentialité</span>
+            En continuant tu acceptes nos{' '}
+            <span onClick={() => window.location.href = '/cgu'} style={{ color: '#A78BFA', cursor: 'pointer' }}>CGU</span>
+            {' '}et notre{' '}
+            <span onClick={() => window.location.href = '/cgu'} style={{ color: '#A78BFA', cursor: 'pointer' }}>politique de confidentialité</span>
           </div>
         </div>
       </div>
@@ -431,13 +433,11 @@ export default function OnboardingPage() {
         <div style={{ width: 76, height: 76, borderRadius: '24px', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '34px', marginBottom: '28px', boxShadow: '0 20px 60px rgba(109,40,217,0.4)' }}>✦</div>
         <div style={{ fontSize: '52px', marginBottom: '16px' }}>📧</div>
         <div style={{ fontSize: '24px', fontWeight: '900', color: text, marginBottom: '10px', letterSpacing: '-0.5px' }}>Vérifie ton email</div>
-        <div style={{ fontSize: '14px', color: muted, marginBottom: '8px', lineHeight: 1.7 }}>
-          On a envoyé un lien de confirmation à
-        </div>
+        <div style={{ fontSize: '14px', color: muted, marginBottom: '8px', lineHeight: 1.7 }}>On a envoyé un lien de confirmation à</div>
         <div style={{ fontSize: '15px', fontWeight: '700', color: '#A78BFA', marginBottom: '28px' }}>{email}</div>
         <div style={{ background: 'rgba(109,40,217,0.08)', border: '1px solid rgba(109,40,217,0.2)', borderRadius: '16px', padding: '16px 20px', marginBottom: '28px', width: '100%', maxWidth: '340px' }}>
           <div style={{ fontSize: '12px', color: muted, lineHeight: 1.7 }}>
-            Clique sur le lien dans l'email pour activer ton compte. Vérifie aussi tes spams si tu ne le vois pas.
+            Clique sur le lien dans l'email pour activer ton compte. Vérifie aussi tes spams.
           </div>
         </div>
         <button onClick={() => setPageMode('login')}
@@ -472,7 +472,7 @@ export default function OnboardingPage() {
               ⚠️ {error}
             </div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
             <div>
               <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</div>
               <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="ton@email.com" style={inputStyle}
@@ -487,13 +487,29 @@ export default function OnboardingPage() {
                 onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
             </div>
           </div>
+
+          {/* Mot de passe oublié */}
+          <div style={{ textAlign: 'right', marginBottom: '20px' }}>
+            <span onClick={() => window.location.href = '/reset'}
+              style={{ color: '#A78BFA', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
+              Mot de passe oublié ?
+            </span>
+          </div>
+
           <button onClick={login} disabled={loading}
             style={{ width: '100%', padding: '16px', background: loading ? surface : 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', borderRadius: '16px', color: loading ? muted : 'white', fontSize: '16px', fontWeight: '800', cursor: loading ? 'default' : 'pointer', marginBottom: '20px' }}>
             {loading ? '⏳ Connexion...' : 'Se connecter →'}
           </button>
-          <div style={{ textAlign: 'center', fontSize: '12px', color: muted }}>
+
+          <div style={{ textAlign: 'center', fontSize: '12px', color: muted, marginBottom: '20px' }}>
             Pas encore de compte ?{' '}
             <span onClick={() => { setPageMode('signup'); setError('') }} style={{ color: '#A78BFA', cursor: 'pointer', fontWeight: '600' }}>Créer mon profil</span>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <span onClick={() => window.location.href = '/cgu'} style={{ color: 'rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: '11px' }}>
+              CGU & Confidentialité
+            </span>
           </div>
         </div>
       </div>
