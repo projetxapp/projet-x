@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useMode, Mode } from '../context/ModeContext'
 import { supabase } from '../lib/supabase'
+import { getMatchScore } from '../lib/matching'
 
 const MODE_CONFIG = {
   talent: {
@@ -77,13 +78,11 @@ export default function HomePage() {
 
       setFirstName(localStorage.getItem('px_firstName') || '')
 
-      // Compter le total des matches
       const { count: total } = await supabase
         .from('matches').select('*', { count: 'exact', head: true })
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
       setTotalMatches(total || 0)
 
-      // Charger seulement les 3 derniers matches
       const { data: matchData } = await supabase
         .from('matches').select('*')
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
@@ -95,40 +94,28 @@ export default function HomePage() {
 
         const enriched = await Promise.all(matchData.map(async (match: any) => {
           const otherId = match.user1_id === user.id ? match.user2_id : match.user1_id
+          const matchMode = match.mode1 || activeMode
 
-          const { data: profile } = await supabase
-            .from('profiles').select('id, first_name, last_name, avatar_url')
-            .eq('id', otherId).single()
+          const [profileRes, lastMsgRes, unreadRes, score] = await Promise.all([
+            supabase.from('profiles').select('id, first_name, last_name, avatar_url').eq('id', otherId).single(),
+            supabase.from('messages').select('content, created_at, sender_id').eq('match_id', match.id).order('created_at', { ascending: false }).limit(1),
+            supabase.from('messages').select('*', { count: 'exact', head: true }).eq('match_id', match.id).neq('sender_id', user.id).eq('seen', false),
+            getMatchScore(user.id, otherId, matchMode),
+          ])
 
-          const { data: lastMsgArr } = await supabase
-            .from('messages').select('content, created_at, sender_id')
-            .eq('match_id', match.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-
-          const { count: unread } = await supabase
-            .from('messages').select('*', { count: 'exact', head: true })
-            .eq('match_id', match.id)
-            .neq('sender_id', user.id)
-            .eq('seen', false)
-
-          totalUnread += unread || 0
-
-          const lastMsg = lastMsgArr?.[0]
+          const profile = profileRes.data
+          const lastMsg = lastMsgRes.data?.[0]
           const lastMsgIsMe = lastMsg?.sender_id === user.id
+          totalUnread += unreadRes.count || 0
 
           let subtitle = ''
           let tags: string[] = []
-          const { data: talentP } = await supabase
-            .from('talent_profiles').select('statut, skills')
-            .eq('user_id', otherId).single()
+          const { data: talentP } = await supabase.from('talent_profiles').select('statut, skills').eq('user_id', otherId).single()
           if (talentP) {
             subtitle = talentP.statut || ''
             tags = talentP.skills?.slice(0, 3) || []
           } else {
-            const { data: projectP } = await supabase
-              .from('project_profiles').select('project_name, stage, sectors')
-              .eq('user_id', otherId).single()
+            const { data: projectP } = await supabase.from('project_profiles').select('project_name, stage, sectors').eq('user_id', otherId).single()
             if (projectP) {
               subtitle = `${projectP.project_name || 'Projet'} · ${projectP.stage || ''}`
               tags = projectP.sectors?.slice(0, 2) || []
@@ -141,12 +128,11 @@ export default function HomePage() {
             firstName: profile?.first_name || 'Utilisateur',
             lastName: profile?.last_name || '',
             photo: profile?.avatar_url || `https://i.pravatar.cc/150?u=${otherId}`,
-            subtitle,
-            tags,
+            subtitle, tags,
             lastMsg: lastMsg?.content || '',
             lastMsgIsMe,
-            unread: unread || 0,
-            score: Math.floor(Math.random() * 20) + 78,
+            unread: unreadRes.count || 0,
+            score,
           }
         }))
 
@@ -154,10 +140,7 @@ export default function HomePage() {
         setUnreadCount(totalUnread)
       }
 
-      // Complétion du profil
-      const { data: talentProf } = await supabase
-        .from('talent_profiles').select('bio, skills')
-        .eq('user_id', user.id).single()
+      const { data: talentProf } = await supabase.from('talent_profiles').select('bio, skills').eq('user_id', user.id).single()
       if (talentProf) {
         let comp = 0
         if (talentProf.bio?.trim()) comp += 50
@@ -185,7 +168,6 @@ export default function HomePage() {
     <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', transition: 'background 0.3s' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-      {/* Header */}
       <div style={{ padding: '44px 20px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <div>
@@ -226,7 +208,6 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            {/* Barre complétion */}
             {profileCompletion < 100 && (
               <div onClick={() => window.location.href = '/profil'}
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: card, borderRadius: '16px', border: `1px solid ${cfg.accent}30`, marginBottom: '12px', cursor: 'pointer' }}>
@@ -241,7 +222,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* CTA Swipe */}
             <div onClick={() => window.location.href = '/swipe'}
               style={{ borderRadius: '22px', overflow: 'hidden', marginBottom: '16px', cursor: 'pointer', position: 'relative', background: cfg.gradient, boxShadow: `0 12px 40px ${cfg.accent}40` }}>
               <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '140px', height: '140px', background: 'rgba(255,255,255,0.06)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -262,7 +242,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Section matches */}
             {loadingMatches ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid ${cfg.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
@@ -271,9 +250,7 @@ export default function HomePage() {
               <div style={{ background: card, borderRadius: '20px', border: `1px solid ${cardBorder}`, padding: '28px 20px', textAlign: 'center' }}>
                 <div style={{ fontSize: '40px', marginBottom: '12px' }}>💫</div>
                 <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>Pas encore de matches</div>
-                <div style={{ fontSize: '13px', color: muted, marginBottom: '20px', lineHeight: 1.5 }}>
-                  Swipe des profils pour commencer à matcher.
-                </div>
+                <div style={{ fontSize: '13px', color: muted, marginBottom: '20px', lineHeight: 1.5 }}>Swipe des profils pour commencer à matcher.</div>
                 <button onClick={() => window.location.href = '/swipe'}
                   style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
                   Commencer à swiper →
@@ -281,7 +258,6 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                {/* Titre section avec total */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ fontSize: '16px', fontWeight: '800', color: text }}>{cfg.feedTitle}</div>
@@ -291,7 +267,6 @@ export default function HomePage() {
                       </span>
                     )}
                   </div>
-                  {/* Voir tout seulement si plus de 3 matches */}
                   {totalMatches > 3 && (
                     <div onClick={() => window.location.href = '/chat'}
                       style={{ fontSize: '12px', color: cfg.accentLight, cursor: 'pointer', fontWeight: '600' }}>
@@ -300,7 +275,6 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {/* 3 derniers matches */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {matches.map(m => (
                     <div key={m.matchId} onClick={() => window.location.href = `/chat?match=${m.matchId}`}
@@ -321,13 +295,11 @@ export default function HomePage() {
                           <div style={{ fontSize: '14px', fontWeight: m.unread > 0 ? '800' : '600', color: text }}>
                             {m.firstName} {m.lastName}
                           </div>
-                          <div style={{ fontSize: '10px', fontWeight: '700', color: m.score >= 90 ? '#F97316' : cfg.accentLight, flexShrink: 0 }}>
+                          <div style={{ fontSize: '11px', fontWeight: '800', color: m.score >= 80 ? '#4ADE80' : m.score >= 60 ? cfg.accentLight : muted, flexShrink: 0, background: m.score >= 80 ? 'rgba(74,222,128,0.1)' : cfg.accentBg, padding: '2px 8px', borderRadius: '20px' }}>
                             {m.score}%
                           </div>
                         </div>
-                        {m.subtitle && (
-                          <div style={{ fontSize: '11px', color: muted, marginBottom: '4px' }}>{m.subtitle}</div>
-                        )}
+                        {m.subtitle && <div style={{ fontSize: '11px', color: muted, marginBottom: '4px' }}>{m.subtitle}</div>}
                         {m.lastMsg ? (
                           <div style={{ fontSize: '11px', color: m.unread > 0 ? text : muted, fontWeight: m.unread > 0 ? '600' : '400', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                             {m.lastMsgIsMe ? <span style={{ color: muted }}>Toi : </span> : null}{m.lastMsg}
@@ -349,7 +321,6 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                {/* CTA Explorer */}
                 <div onClick={() => window.location.href = '/explorer'}
                   style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: card, borderRadius: '18px', border: `1px solid ${cardBorder}`, cursor: 'pointer', marginTop: '12px' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = cfg.accent + '50')}
@@ -368,7 +339,6 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
           <div key={item.id} onClick={() => window.location.href = item.href}
