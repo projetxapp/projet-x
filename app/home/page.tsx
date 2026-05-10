@@ -51,8 +51,9 @@ function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string
 }
 
 export default function HomePage() {
-  const { activeMode, userModes, activateMode, dark, setDark } = useMode()
+  const { activeMode, userModes, activateMode, dark, setDark, unreadNotifCount } = useMode()
   const [firstName, setFirstName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [matches, setMatches] = useState<any[]>([])
   const [totalMatches, setTotalMatches] = useState(0)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -77,6 +78,12 @@ export default function HomePage() {
       if (!user) { window.location.href = '/'; return }
 
       setFirstName(localStorage.getItem('px_firstName') || '')
+
+      const { data: profileData } = await supabase.from('profiles').select('first_name, avatar_url').eq('id', user.id).single()
+      if (profileData) {
+        setFirstName(profileData.first_name || '')
+        setAvatarUrl(profileData.avatar_url || '')
+      }
 
       const { count: total } = await supabase
         .from('matches').select('*', { count: 'exact', head: true })
@@ -168,6 +175,7 @@ export default function HomePage() {
     <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', transition: 'background 0.3s' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
+      {/* Header */}
       <div style={{ padding: '44px 20px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <div>
@@ -179,15 +187,37 @@ export default function HomePage() {
               {greeting}, {firstName || '...'} 👋
             </div>
           </div>
+
+          {/* Actions header */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {/* Cloche notifications */}
+            <div onClick={() => window.location.href = '/notifications'}
+              style={{ position: 'relative', cursor: 'pointer' }}>
+              <button style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                🔔
+              </button>
+              {unreadNotifCount > 0 && (
+                <div style={{ position: 'absolute', top: -3, right: -3, width: 16, height: 16, background: '#F97316', borderRadius: '50%', fontSize: '9px', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${bg}` }}>
+                  {unreadNotifCount}
+                </div>
+              )}
+            </div>
+
+            {/* Dark mode */}
             <button onClick={() => setDark(!dark)}
               style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {dark ? '☀️' : '🌙'}
             </button>
+
+            {/* Avatar */}
             <div onClick={() => window.location.href = '/profil'} style={{ position: 'relative', cursor: 'pointer' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: cfg.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', border: `2px solid ${cfg.accent}` }}>
-                {firstName ? firstName[0].toUpperCase() : '?'}
-              </div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${cfg.accent}` }} />
+              ) : (
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: cfg.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', border: `2px solid ${cfg.accent}` }}>
+                  {firstName ? firstName[0].toUpperCase() : '?'}
+                </div>
+              )}
               <div style={{ position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, background: '#4ADE80', borderRadius: '50%', border: `2px solid ${bg}` }} />
             </div>
           </div>
@@ -208,6 +238,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
+            {/* Barre complétion */}
             {profileCompletion < 100 && (
               <div onClick={() => window.location.href = '/profil'}
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: card, borderRadius: '16px', border: `1px solid ${cfg.accent}30`, marginBottom: '12px', cursor: 'pointer' }}>
@@ -222,6 +253,7 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* CTA Swipe */}
             <div onClick={() => window.location.href = '/swipe'}
               style={{ borderRadius: '22px', overflow: 'hidden', marginBottom: '16px', cursor: 'pointer', position: 'relative', background: cfg.gradient, boxShadow: `0 12px 40px ${cfg.accent}40` }}>
               <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '140px', height: '140px', background: 'rgba(255,255,255,0.06)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -242,6 +274,7 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Section matches */}
             {loadingMatches ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid ${cfg.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
@@ -295,7 +328,7 @@ export default function HomePage() {
                           <div style={{ fontSize: '14px', fontWeight: m.unread > 0 ? '800' : '600', color: text }}>
                             {m.firstName} {m.lastName}
                           </div>
-                          <div style={{ fontSize: '11px', fontWeight: '800', color: m.score >= 80 ? '#4ADE80' : m.score >= 60 ? cfg.accentLight : muted, flexShrink: 0, background: m.score >= 80 ? 'rgba(74,222,128,0.1)' : cfg.accentBg, padding: '2px 8px', borderRadius: '20px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: '800', color: m.score >= 80 ? '#4ADE80' : cfg.accentLight, flexShrink: 0, background: m.score >= 80 ? 'rgba(74,222,128,0.1)' : cfg.accentBg, padding: '2px 8px', borderRadius: '20px' }}>
                             {m.score}%
                           </div>
                         </div>
@@ -339,6 +372,7 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
           <div key={item.id} onClick={() => window.location.href = item.href}
