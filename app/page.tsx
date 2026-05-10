@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { supabase } from './lib/supabase'
 
 const ROLES = [
@@ -95,7 +95,6 @@ const TICKETS = [
   { id: 'large', label: '100 000€+', desc: 'Lead investor · VC', emoji: '🏦' },
 ]
 
-// Tous les départements français (01-95 + DOM-TOM) + options spéciales
 const DEPARTEMENTS = [
   '01 - Ain', '02 - Aisne', '03 - Allier', '04 - Alpes-de-Haute-Provence',
   '05 - Hautes-Alpes', '06 - Alpes-Maritimes', '07 - Ardèche', '08 - Ardennes',
@@ -122,21 +121,20 @@ const DEPARTEMENTS = [
   '87 - Haute-Vienne', '88 - Vosges', '89 - Yonne', '90 - Territoire de Belfort',
   '91 - Essonne', '92 - Hauts-de-Seine', '93 - Seine-Saint-Denis', '94 - Val-de-Marne',
   '95 - Val-d\'Oise',
-  // DOM-TOM
   '971 - Guadeloupe', '972 - Martinique', '973 - Guyane',
   '974 - La Réunion', '976 - Mayotte',
-  // Options spéciales
   '🌐 Remote / Full télétravail', '🌍 International',
 ]
 
 type PageMode = 'welcome' | 'signup' | 'login' | 'verify'
-type StepType = 'info' | 'roles' | 'talent' | 'project' | 'investor' | 'recap'
+type StepType = 'info' | 'roles' | 'talent' | 'project' | 'investor' | 'photo' | 'recap'
 
 function buildSteps(roles: string[]): StepType[] {
   const steps: StepType[] = ['info', 'roles']
   if (roles.includes('talent')) steps.push('talent')
   if (roles.includes('project')) steps.push('project')
   if (roles.includes('investor')) steps.push('investor')
+  steps.push('photo')
   steps.push('recap')
   return steps
 }
@@ -282,6 +280,10 @@ export default function OnboardingPage() {
   const [projectName, setProjectName] = useState('')
   const [projectStage, setProjectStage] = useState('')
   const [investorTicket, setInvestorTicket] = useState('')
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const bg = '#08070F'
   const cardBorder = 'rgba(255,255,255,0.07)'
@@ -316,6 +318,15 @@ export default function OnboardingPage() {
     else setPageMode('welcome')
   }
 
+  function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   async function finish() {
     setLoading(true)
     setError('')
@@ -331,10 +342,26 @@ export default function OnboardingPage() {
       const userId = authData.user?.id
       if (!userId) throw new Error('Erreur lors de la création du compte')
 
+      // Upload photo si présente
+      let avatarUrl = ''
+      if (photoFile && userId) {
+        setUploadingPhoto(true)
+        const ext = photoFile.name.split('.').pop()
+        const path = `${userId}/avatar.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('avatars').upload(path, photoFile, { upsert: true })
+        if (!uploadError) {
+          const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+          avatarUrl = data.publicUrl
+        }
+        setUploadingPhoto(false)
+      }
+
       await supabase.from('profiles').update({
         age: parseInt(age),
         city: departement,
         active_mode: selectedRoles[0] || 'talent',
+        avatar_url: avatarUrl || null,
       }).eq('id', userId)
 
       for (const role of selectedRoles) {
@@ -405,9 +432,7 @@ export default function OnboardingPage() {
   }
 
   const deptSuggestions = deptQuery.length >= 1
-    ? DEPARTEMENTS.filter(d =>
-        d.toLowerCase().includes(deptQuery.toLowerCase())
-      ).slice(0, 6)
+    ? DEPARTEMENTS.filter(d => d.toLowerCase().includes(deptQuery.toLowerCase())).slice(0, 6)
     : []
 
   // ── WELCOME ──
@@ -548,6 +573,7 @@ export default function OnboardingPage() {
     talent: { title: '⚡ Ton profil Talent', sub: 'Pour trouver les projets qui te correspondent', accent: '#A78BFA' },
     project: { title: '🚀 Ton profil Projet', sub: 'Pour attirer les bons talents et investisseurs', accent: '#22D3EE' },
     investor: { title: '💎 Ton profil Investisseur', sub: 'Pour matcher avec les projets qui t\'intéressent', accent: '#FCD34D' },
+    photo: { title: '📸 Ta photo de profil', sub: 'Les profils avec photo matchent 10x plus' },
     recap: { title: 'C\'est parti !', sub: 'Ton profil est prêt 🎉' },
   }
   const current = stepTitles[currentStepType]
@@ -599,7 +625,6 @@ export default function OnboardingPage() {
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
             </div>
-
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge *</div>
@@ -609,14 +634,14 @@ export default function OnboardingPage() {
               </div>
               <div style={{ flex: 1, position: 'relative' }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Département <span style={{ color: hint, fontWeight: '400', textTransform: 'none', fontSize: '10px' }}>(optionnel)</span>
+                  Dép. <span style={{ color: hint, fontWeight: '400', textTransform: 'none', fontSize: '10px' }}>(optionnel)</span>
                 </div>
                 <input
                   value={departement || deptQuery}
                   onChange={e => { setDeptQuery(e.target.value); setDepartement(''); setDeptOpen(true) }}
                   onFocus={() => setDeptOpen(true)}
                   onBlur={() => setTimeout(() => setDeptOpen(false), 150)}
-                  placeholder="78, Paris, Remote..."
+                  placeholder="78, Remote..."
                   style={inputStyle}
                 />
                 {deptOpen && deptSuggestions.length > 0 && (
@@ -633,7 +658,6 @@ export default function OnboardingPage() {
                 )}
               </div>
             </div>
-
             <div>
               <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email *</div>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inputStyle}
@@ -775,16 +799,75 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* PHOTO */}
+        {currentStepType === 'photo' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', paddingTop: '8px' }}>
+            {/* Preview */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{ width: 140, height: 140, borderRadius: '50%', background: photoPreview ? 'transparent' : 'linear-gradient(135deg,#6D28D9,#0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', boxShadow: '0 16px 48px rgba(109,40,217,0.4)', border: `3px solid ${photoPreview ? '#6D28D9' : 'transparent'}`, position: 'relative' }}>
+              {photoPreview ? (
+                <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '4px' }}>📸</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Ajouter</div>
+                </div>
+              )}
+              {photoPreview && (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', padding: '6px', textAlign: 'center', fontSize: '11px', color: 'white', fontWeight: '600' }}>
+                  Changer
+                </div>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoSelect}
+            />
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: text, marginBottom: '8px' }}>
+                {photoPreview ? '✅ Super photo !' : 'Ajoute ta photo de profil'}
+              </div>
+              <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6, maxWidth: '280px' }}>
+                {photoPreview
+                  ? 'Tu feras une excellente première impression 🔥'
+                  : 'Les profils avec photo ont 10x plus de matches. Tu peux aussi en ajouter une plus tard.'}
+              </div>
+            </div>
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{ padding: '14px 28px', background: photoPreview ? 'rgba(109,40,217,0.1)' : 'linear-gradient(135deg,#6D28D9,#0891B2)', border: `1.5px solid ${photoPreview ? 'rgba(109,40,217,0.3)' : 'transparent'}`, borderRadius: '14px', color: photoPreview ? '#A78BFA' : 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+              {photoPreview ? '🔄 Changer la photo' : '📷 Choisir une photo'}
+            </button>
+
+            {!photoPreview && (
+              <div style={{ fontSize: '12px', color: hint, textDecoration: 'underline', cursor: 'pointer' }}
+                onClick={next}>
+                Passer pour l'instant →
+              </div>
+            )}
+          </div>
+        )}
+
         {/* RECAP */}
         {currentStepType === 'recap' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '4px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ width: 72, height: 72, borderRadius: '50%', background: primaryRole.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '900', color: 'white', boxShadow: `0 16px 48px ${primaryRole.glow}`, marginBottom: '10px' }}>
-                {firstName ? firstName[0].toUpperCase() : '?'}
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: primaryRole.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '900', color: 'white', boxShadow: `0 16px 48px ${primaryRole.glow}`, marginBottom: '10px', overflow: 'hidden' }}>
+                {photoPreview
+                  ? <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : firstName ? firstName[0].toUpperCase() : '?'}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: text, letterSpacing: '-0.5px' }}>Prêt, {firstName} ! 🎉</div>
               <div style={{ fontSize: '12px', color: muted, marginTop: '4px' }}>Tu pourras compléter ton profil à tout moment ✦</div>
             </div>
+
             <div style={{ background: surface, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px 16px' }}>
               <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>👤 Identité</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -793,6 +876,7 @@ export default function OnboardingPage() {
                 <div style={{ fontSize: '12px', color: muted }}>✉️ {email}</div>
               </div>
             </div>
+
             {selectedRoles.map(roleId => {
               const role = ROLES.find(r => r.id === roleId)!
               return (
@@ -830,10 +914,18 @@ export default function OnboardingPage() {
       </div>
 
       <div style={{ padding: '12px 24px 28px', flexShrink: 0 }}>
-        <button onClick={next} disabled={!canNext() || loading}
-          style={{ width: '100%', padding: '16px', background: canNext() && !loading ? 'linear-gradient(135deg,#6D28D9,#0891B2)' : surface, border: canNext() && !loading ? 'none' : `1.5px solid ${cardBorder}`, borderRadius: '16px', color: canNext() && !loading ? 'white' : hint, fontSize: '15px', fontWeight: '800', cursor: canNext() && !loading ? 'pointer' : 'default', transition: 'all 0.2s', boxShadow: canNext() && !loading ? '0 8px 32px rgba(109,40,217,0.35)' : 'none' }}>
-          {loading ? '⏳ Création en cours...' : currentStepType === 'recap' ? 'Créer mon compte 🚀' : 'Continuer →'}
-        </button>
+        {currentStepType !== 'photo' && (
+          <button onClick={next} disabled={!canNext() || loading}
+            style={{ width: '100%', padding: '16px', background: canNext() && !loading ? 'linear-gradient(135deg,#6D28D9,#0891B2)' : surface, border: canNext() && !loading ? 'none' : `1.5px solid ${cardBorder}`, borderRadius: '16px', color: canNext() && !loading ? 'white' : hint, fontSize: '15px', fontWeight: '800', cursor: canNext() && !loading ? 'pointer' : 'default', transition: 'all 0.2s', boxShadow: canNext() && !loading ? '0 8px 32px rgba(109,40,217,0.35)' : 'none' }}>
+            {loading ? (uploadingPhoto ? '📸 Upload en cours...' : '⏳ Création en cours...') : currentStepType === 'recap' ? 'Créer mon compte 🚀' : 'Continuer →'}
+          </button>
+        )}
+        {currentStepType === 'photo' && photoPreview && (
+          <button onClick={next}
+            style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', borderRadius: '16px', color: 'white', fontSize: '15px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 32px rgba(109,40,217,0.35)' }}>
+            Continuer →
+          </button>
+        )}
       </div>
     </div>
   )
