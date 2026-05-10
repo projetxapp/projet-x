@@ -95,11 +95,38 @@ const TICKETS = [
   { id: 'large', label: '100 000€+', desc: 'Lead investor · VC', emoji: '🏦' },
 ]
 
-const VILLES = [
-  'Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Toulouse', 'Nantes', 'Strasbourg',
-  'Lille', 'Nice', 'Montpellier', 'Rennes', 'Grenoble', 'Tours', 'Rouen',
-  'Aix-en-Provence', 'Dijon', 'Angers', 'Brest', 'Le Havre', 'Reims',
-  'Remote', 'International',
+// Tous les départements français (01-95 + DOM-TOM) + options spéciales
+const DEPARTEMENTS = [
+  '01 - Ain', '02 - Aisne', '03 - Allier', '04 - Alpes-de-Haute-Provence',
+  '05 - Hautes-Alpes', '06 - Alpes-Maritimes', '07 - Ardèche', '08 - Ardennes',
+  '09 - Ariège', '10 - Aube', '11 - Aude', '12 - Aveyron',
+  '13 - Bouches-du-Rhône', '14 - Calvados', '15 - Cantal', '16 - Charente',
+  '17 - Charente-Maritime', '18 - Cher', '19 - Corrèze', '2A - Corse-du-Sud',
+  '2B - Haute-Corse', '21 - Côte-d\'Or', '22 - Côtes-d\'Armor', '23 - Creuse',
+  '24 - Dordogne', '25 - Doubs', '26 - Drôme', '27 - Eure',
+  '28 - Eure-et-Loir', '29 - Finistère', '30 - Gard', '31 - Haute-Garonne',
+  '32 - Gers', '33 - Gironde', '34 - Hérault', '35 - Ille-et-Vilaine',
+  '36 - Indre', '37 - Indre-et-Loire', '38 - Isère', '39 - Jura',
+  '40 - Landes', '41 - Loir-et-Cher', '42 - Loire', '43 - Haute-Loire',
+  '44 - Loire-Atlantique', '45 - Loiret', '46 - Lot', '47 - Lot-et-Garonne',
+  '48 - Lozère', '49 - Maine-et-Loire', '50 - Manche', '51 - Marne',
+  '52 - Haute-Marne', '53 - Mayenne', '54 - Meurthe-et-Moselle', '55 - Meuse',
+  '56 - Morbihan', '57 - Moselle', '58 - Nièvre', '59 - Nord',
+  '60 - Oise', '61 - Orne', '62 - Pas-de-Calais', '63 - Puy-de-Dôme',
+  '64 - Pyrénées-Atlantiques', '65 - Hautes-Pyrénées', '66 - Pyrénées-Orientales',
+  '67 - Bas-Rhin', '68 - Haut-Rhin', '69 - Rhône', '70 - Haute-Saône',
+  '71 - Saône-et-Loire', '72 - Sarthe', '73 - Savoie', '74 - Haute-Savoie',
+  '75 - Paris', '76 - Seine-Maritime', '77 - Seine-et-Marne', '78 - Yvelines',
+  '79 - Deux-Sèvres', '80 - Somme', '81 - Tarn', '82 - Tarn-et-Garonne',
+  '83 - Var', '84 - Vaucluse', '85 - Vendée', '86 - Vienne',
+  '87 - Haute-Vienne', '88 - Vosges', '89 - Yonne', '90 - Territoire de Belfort',
+  '91 - Essonne', '92 - Hauts-de-Seine', '93 - Seine-Saint-Denis', '94 - Val-de-Marne',
+  '95 - Val-d\'Oise',
+  // DOM-TOM
+  '971 - Guadeloupe', '972 - Martinique', '973 - Guyane',
+  '974 - La Réunion', '976 - Mayotte',
+  // Options spéciales
+  '🌐 Remote / Full télétravail', '🌍 International',
 ]
 
 type PageMode = 'welcome' | 'signup' | 'login' | 'verify'
@@ -242,9 +269,9 @@ export default function OnboardingPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [age, setAge] = useState('')
-  const [ville, setVille] = useState('')
-  const [villeQuery, setVilleQuery] = useState('')
-  const [villeOpen, setVilleOpen] = useState(false)
+  const [departement, setDepartement] = useState('')
+  const [deptQuery, setDeptQuery] = useState('')
+  const [deptOpen, setDeptOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
@@ -273,7 +300,7 @@ export default function OnboardingPage() {
   }
 
   function canNext(): boolean {
-    if (currentStepType === 'info') return !!(firstName.trim() && lastName.trim() && age && email && password.length >= 8 && ville)
+    if (currentStepType === 'info') return !!(firstName.trim() && lastName.trim() && age && email && password.length >= 8)
     if (currentStepType === 'roles') return selectedRoles.length > 0
     return true
   }
@@ -305,7 +332,9 @@ export default function OnboardingPage() {
       if (!userId) throw new Error('Erreur lors de la création du compte')
 
       await supabase.from('profiles').update({
-        age: parseInt(age), city: ville, active_mode: selectedRoles[0] || 'talent',
+        age: parseInt(age),
+        city: departement,
+        active_mode: selectedRoles[0] || 'talent',
       }).eq('id', userId)
 
       for (const role of selectedRoles) {
@@ -375,8 +404,10 @@ export default function OnboardingPage() {
     boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit',
   }
 
-  const villeSuggestions = villeQuery.length >= 1
-    ? VILLES.filter(v => v.toLowerCase().startsWith(villeQuery.toLowerCase())).slice(0, 5)
+  const deptSuggestions = deptQuery.length >= 1
+    ? DEPARTEMENTS.filter(d =>
+        d.toLowerCase().includes(deptQuery.toLowerCase())
+      ).slice(0, 6)
     : []
 
   // ── WELCOME ──
@@ -487,25 +518,19 @@ export default function OnboardingPage() {
                 onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
             </div>
           </div>
-
-          {/* Mot de passe oublié */}
           <div style={{ textAlign: 'right', marginBottom: '20px' }}>
-            <span onClick={() => window.location.href = '/reset'}
-              style={{ color: '#A78BFA', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
+            <span onClick={() => window.location.href = '/reset'} style={{ color: '#A78BFA', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
               Mot de passe oublié ?
             </span>
           </div>
-
           <button onClick={login} disabled={loading}
             style={{ width: '100%', padding: '16px', background: loading ? surface : 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', borderRadius: '16px', color: loading ? muted : 'white', fontSize: '16px', fontWeight: '800', cursor: loading ? 'default' : 'pointer', marginBottom: '20px' }}>
             {loading ? '⏳ Connexion...' : 'Se connecter →'}
           </button>
-
           <div style={{ textAlign: 'center', fontSize: '12px', color: muted, marginBottom: '20px' }}>
             Pas encore de compte ?{' '}
             <span onClick={() => { setPageMode('signup'); setError('') }} style={{ color: '#A78BFA', cursor: 'pointer', fontWeight: '600' }}>Créer mon profil</span>
           </div>
-
           <div style={{ textAlign: 'center' }}>
             <span onClick={() => window.location.href = '/cgu'} style={{ color: 'rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: '11px' }}>
               CGU & Confidentialité
@@ -562,57 +587,61 @@ export default function OnboardingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prénom</div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prénom *</div>
                 <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Thomas" style={inputStyle}
                   onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Nom</div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Nom *</div>
                 <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Mercier" style={inputStyle}
                   onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
             </div>
+
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge</div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Âge *</div>
                 <input type="number" min="16" max="99" value={age} onChange={e => setAge(e.target.value)} placeholder="22" style={inputStyle}
                   onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                   onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
               </div>
               <div style={{ flex: 1, position: 'relative' }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ville</div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Département <span style={{ color: hint, fontWeight: '400', textTransform: 'none', fontSize: '10px' }}>(optionnel)</span>
+                </div>
                 <input
-                  value={ville || villeQuery}
-                  onChange={e => { setVilleQuery(e.target.value); setVille(''); setVilleOpen(true) }}
-                  onFocus={() => setVilleOpen(true)}
-                  onBlur={() => setTimeout(() => setVilleOpen(false), 150)}
-                  placeholder="Paris..."
+                  value={departement || deptQuery}
+                  onChange={e => { setDeptQuery(e.target.value); setDepartement(''); setDeptOpen(true) }}
+                  onFocus={() => setDeptOpen(true)}
+                  onBlur={() => setTimeout(() => setDeptOpen(false), 150)}
+                  placeholder="78, Paris, Remote..."
                   style={inputStyle}
                 />
-                {villeOpen && villeSuggestions.length > 0 && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#111019', border: `1px solid ${cardBorder}`, borderRadius: '12px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
-                    {villeSuggestions.map((v, i) => (
-                      <div key={i} onMouseDown={() => { setVille(v); setVilleQuery(v); setVilleOpen(false) }}
-                        style={{ padding: '11px 14px', cursor: 'pointer', fontSize: '13px', color: text, borderBottom: i < villeSuggestions.length - 1 ? `1px solid ${cardBorder}` : 'none' }}
+                {deptOpen && deptSuggestions.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#111019', border: `1px solid ${cardBorder}`, borderRadius: '12px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden', maxHeight: '200px', overflowY: 'auto' }}>
+                    {deptSuggestions.map((d, i) => (
+                      <div key={i} onMouseDown={() => { setDepartement(d); setDeptQuery(d); setDeptOpen(false) }}
+                        style={{ padding: '11px 14px', cursor: 'pointer', fontSize: '13px', color: text, borderBottom: i < deptSuggestions.length - 1 ? `1px solid ${cardBorder}` : 'none' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(109,40,217,0.1)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        📍 {v}
+                        📍 {d}
                       </div>
                     ))}
                   </div>
                 )}
               </div>
             </div>
+
             <div>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email *</div>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inputStyle}
                 onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                 onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
             </div>
             <div>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Mot de passe</div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: muted, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Mot de passe *</div>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="8 caractères minimum" style={inputStyle}
                 onFocus={e => (e.currentTarget.style.borderColor = '#6D28D9')}
                 onBlur={e => (e.currentTarget.style.borderColor = cardBorder)} />
@@ -620,6 +649,7 @@ export default function OnboardingPage() {
                 <div style={{ fontSize: '11px', color: '#F87171', marginTop: '6px' }}>⚠️ Minimum 8 caractères</div>
               )}
             </div>
+            <div style={{ fontSize: '11px', color: hint, textAlign: 'right' }}>* Champs obligatoires</div>
           </div>
         )}
 
@@ -759,7 +789,7 @@ export default function OnboardingPage() {
               <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>👤 Identité</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '700', color: text }}>{firstName} {lastName}, {age} ans</div>
-                {ville && <div style={{ fontSize: '12px', color: muted }}>📍 {ville}</div>}
+                {departement && <div style={{ fontSize: '12px', color: muted }}>📍 {departement}</div>}
                 <div style={{ fontSize: '12px', color: muted }}>✉️ {email}</div>
               </div>
             </div>
