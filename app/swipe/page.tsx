@@ -15,6 +15,30 @@ const STAGE_COLORS: Record<string, string> = {
   'Idée': '#F97316', 'Prototype': '#8B5CF6', 'Lancé': '#4ADE80', 'Croissance': '#06B6D4', 'Série A+': '#22D3EE'
 }
 
+function ModeSelector({ muted, cardBorder, bg }: { muted: string; cardBorder: string; bg: string }) {
+  const { activeMode, setActiveMode, userModes, activateMode } = useMode()
+  const modes = [
+    { id: 'talent' as Mode, emoji: '⚡', label: 'Talent' },
+    { id: 'project' as Mode, emoji: '🚀', label: 'Projet' },
+    { id: 'investor' as Mode, emoji: '💎', label: 'Invest' },
+  ]
+  return (
+    <div style={{ display: 'flex', gap: '6px' }}>
+      {modes.map(m => {
+        const isActive = activeMode === m.id
+        const has = userModes.includes(m.id)
+        const cfg = MODE_CONFIG[m.id]
+        return (
+          <button key={m.id} onClick={() => has ? setActiveMode(m.id) : activateMode(m.id)}
+            style={{ padding: '5px 12px', borderRadius: '20px', border: `1px solid ${isActive ? cfg.accent : cardBorder}`, background: isActive ? cfg.accentBg : 'transparent', color: isActive ? cfg.accentLight : muted, fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+            {m.emoji} {m.label}{!has && <span style={{ color: '#F97316', fontSize: '9px' }}>+</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function SwipePage() {
   const { activeMode, userModes, dark, setDark, unreadNotifCount } = useMode()
   const [userId, setUserId] = useState('')
@@ -56,6 +80,7 @@ export default function SwipePage() {
 
   async function loadProfiles(uid: string) {
     setLoadingCards(true)
+    setCurrentIndex(0)
     try {
       const { data: swipedData } = await supabase.from('swipes').select('swiped_id').eq('swiper_id', uid).eq('swiper_mode', activeMode)
       const swipedIds = swipedData?.map(s => s.swiped_id) || []
@@ -66,19 +91,40 @@ export default function SwipePage() {
         const { data: profileData } = await supabase.from('profiles').select('id, first_name, last_name, age, city, avatar_url').neq('id', uid)
         merged = (talentData || []).filter(t => !swipedIds.includes(t.user_id)).map(t => {
           const p = profileData?.find(pr => pr.id === t.user_id)
-          return { id: t.id, user_id: t.user_id, firstName: p?.first_name || 'Utilisateur', lastName: p?.last_name || '', age: p?.age || null, city: p?.city || 'France', poste: t.statut || 'Talent', photo: p?.avatar_url || `https://i.pravatar.cc/300?u=${t.user_id}`, score: 75, online: false, bio: t.bio || 'Profil en cours de création...', skills: t.skills || [], modes: t.collab_modes || [] }
+          return {
+            id: t.id, user_id: t.user_id,
+            firstName: p?.first_name || 'Utilisateur', lastName: p?.last_name || '',
+            age: p?.age || null, city: p?.city || '',
+            poste: t.statut || 'Talent',
+            photo: p?.avatar_url || `https://i.pravatar.cc/300?u=${t.user_id}`,
+            score: 75, bio: t.bio || 'Profil en cours de création...',
+            skills: t.skills || [], modes: t.collab_modes || [],
+          }
         })
       } else {
         const { data: projectData } = await supabase.from('project_profiles').select('*').neq('user_id', uid)
         const { data: profileData } = await supabase.from('profiles').select('id, first_name, last_name, avatar_url').neq('id', uid)
         merged = (projectData || []).filter(p => !swipedIds.includes(p.user_id)).map(p => {
           const profile = profileData?.find(pr => pr.id === p.user_id)
-          return { id: p.id, user_id: p.user_id, name: p.project_name || 'Projet sans nom', founder: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Fondateur', founderPhoto: profile?.avatar_url || `https://i.pravatar.cc/100?u=${p.user_id}`, photo: `https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80`, stage: p.stage || 'Idée', stageColor: STAGE_COLORS[p.stage] || '#A78BFA', sector: p.sectors?.[0] || 'Tech', desc: p.description || p.founder_bio || 'Description en cours...', needs: p.needs || [], equity: p.equity || '', budget: p.budget || null, score: 75, modes: p.collab_modes || [], workMode: p.work_mode || 'Remote', team: p.team_size || 1 }
+          return {
+            id: p.id, user_id: p.user_id,
+            name: p.project_name || 'Projet sans nom',
+            founder: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Fondateur',
+            founderPhoto: profile?.avatar_url || `https://i.pravatar.cc/100?u=${p.user_id}`,
+            photo: `https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80`,
+            stage: p.stage || 'Idée', stageColor: STAGE_COLORS[p.stage] || '#A78BFA',
+            sector: p.sectors?.[0] || 'Tech',
+            desc: p.description || p.founder_bio || 'Description en cours...',
+            needs: p.needs || [], equity: p.equity || '', budget: p.budget || null,
+            score: 75, modes: p.collab_modes || [], workMode: p.work_mode || 'Remote', team: p.team_size || 1,
+          }
         })
       }
 
       if (merged.length > 0) {
-        const scored = await Promise.all(merged.map(async (p: any) => ({ ...p, score: await getMatchScore(uid, p.user_id, activeMode) })))
+        const scored = await Promise.all(merged.map(async (p: any) => ({
+          ...p, score: await getMatchScore(uid, p.user_id, activeMode)
+        })))
         setCards(scored.sort((a: any, b: any) => b.score - a.score))
       } else { setCards([]) }
     } catch (e) { console.error(e); setCards([]) }
@@ -88,17 +134,30 @@ export default function SwipePage() {
   async function saveSwipe(direction: 'like' | 'pass' | 'super') {
     if (!userId || !profile || !profile.user_id) return
     try {
-      await supabase.from('swipes').upsert({ swiper_id: userId, swiped_id: profile.user_id, swiper_mode: activeMode, direction }, { onConflict: 'swiper_id,swiped_id,swiper_mode' })
+      await supabase.from('swipes').upsert({
+        swiper_id: userId, swiped_id: profile.user_id, swiper_mode: activeMode, direction,
+      }, { onConflict: 'swiper_id,swiped_id,swiper_mode' })
+
       if (direction === 'like' || direction === 'super') {
-        const { data: mutual } = await supabase.from('swipes').select('*').eq('swiper_id', profile.user_id).eq('swiped_id', userId).in('direction', ['like', 'super']).single()
+        const { data: mutual } = await supabase.from('swipes').select('*')
+          .eq('swiper_id', profile.user_id).eq('swiped_id', userId)
+          .in('direction', ['like', 'super']).single()
         if (mutual) {
-          const { data: existing } = await supabase.from('matches').select('id').or(`and(user1_id.eq.${userId},user2_id.eq.${profile.user_id}),and(user1_id.eq.${profile.user_id},user2_id.eq.${userId})`).single()
+          const { data: existing } = await supabase.from('matches').select('id')
+            .or(`and(user1_id.eq.${userId},user2_id.eq.${profile.user_id}),and(user1_id.eq.${profile.user_id},user2_id.eq.${userId})`)
+            .single()
           let matchId = existing?.id
           if (!matchId) {
-            const { data: newMatch } = await supabase.from('matches').insert({ user1_id: userId, user2_id: profile.user_id, mode1: activeMode, mode2: mutual.swiper_mode }).select().single()
+            const { data: newMatch } = await supabase.from('matches').insert({
+              user1_id: userId, user2_id: profile.user_id, mode1: activeMode, mode2: mutual.swiper_mode,
+            }).select().single()
             matchId = newMatch?.id
           }
-          setMatchData({ name: isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name, photo: isProjectMode ? profile.photo : profile.founderPhoto, matchId })
+          setMatchData({
+            name: isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name,
+            photo: isProjectMode ? profile.photo : profile.founderPhoto,
+            matchId,
+          })
           setTimeout(() => setShowMatch(true), 380)
         }
       }
@@ -134,21 +193,25 @@ export default function SwipePage() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
-      <div style={{ padding: '36px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '8px', background: cfg.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>✦</div>
-          <span style={{ fontSize: '17px', fontWeight: '900', color: text, letterSpacing: '-0.5px' }}>Projet X</span>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {/* Cloche */}
-          <div onClick={() => window.location.href = '/notifications'} style={{ position: 'relative', cursor: 'pointer' }}>
-            <button style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔔</button>
-            {unreadNotifCount > 0 && <div style={{ position: 'absolute', top: -3, right: -3, width: 16, height: 16, background: '#F97316', borderRadius: '50%', fontSize: '9px', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${bg}` }}>{unreadNotifCount}</div>}
+      <div style={{ padding: '36px 20px 10px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: 28, height: 28, borderRadius: '8px', background: cfg.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>✦</div>
+            <span style={{ fontSize: '17px', fontWeight: '900', color: text, letterSpacing: '-0.5px' }}>Projet X</span>
           </div>
-          <button onClick={() => setDark(!dark)} style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {dark ? '☀️' : '🌙'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {/* Cloche */}
+            <div onClick={() => window.location.href = '/notifications'} style={{ position: 'relative', cursor: 'pointer' }}>
+              <button style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔔</button>
+              {unreadNotifCount > 0 && <div style={{ position: 'absolute', top: -3, right: -3, width: 16, height: 16, background: '#F97316', borderRadius: '50%', fontSize: '9px', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${bg}` }}>{unreadNotifCount}</div>}
+            </div>
+            <button onClick={() => setDark(!dark)} style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {dark ? '☀️' : '🌙'}
+            </button>
+          </div>
         </div>
+        {/* Mode selector */}
+        <ModeSelector muted={muted} cardBorder={cardBorder} bg={bg} />
       </div>
 
       {!hasMode ? (
@@ -157,7 +220,10 @@ export default function SwipePage() {
             <div style={{ fontSize: '48px', marginBottom: '14px' }}>{activeMode === 'talent' ? '⚡' : activeMode === 'project' ? '🚀' : '💎'}</div>
             <div style={{ fontSize: '18px', fontWeight: '800', color: text, marginBottom: '8px' }}>Profil non créé</div>
             <div style={{ fontSize: '13px', color: muted, marginBottom: '24px' }}>Active ce profil pour swiper.</div>
-            <button onClick={() => window.location.href = '/profil'} style={{ width: '100%', padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>Créer mon profil</button>
+            <button onClick={() => window.location.href = '/profil'}
+              style={{ width: '100%', padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+              Créer mon profil
+            </button>
           </div>
         </div>
       ) : loadingCards ? (
@@ -168,35 +234,56 @@ export default function SwipePage() {
       ) : cards.length === 0 || currentIndex >= cards.length ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', flexDirection: 'column', textAlign: 'center', gap: '16px' }}>
           <div style={{ fontSize: '52px' }}>✨</div>
-          <div style={{ fontSize: '20px', fontWeight: '900', color: text }}>{cards.length === 0 ? 'Aucun profil pour l\'instant' : 'Tu as tout vu !'}</div>
-          <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{cards.length === 0 ? 'Reviens quand de nouveaux utilisateurs s\'inscriront.' : 'Reviens plus tard pour de nouveaux profils.'}</div>
-          {cards.length > 0 && <button onClick={() => { setCurrentIndex(0); loadProfiles(userId) }} style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Recommencer</button>}
+          <div style={{ fontSize: '20px', fontWeight: '900', color: text }}>
+            {cards.length === 0 ? 'Aucun profil pour l\'instant' : 'Tu as tout vu !'}
+          </div>
+          <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>
+            {cards.length === 0 ? 'Reviens quand de nouveaux utilisateurs s\'inscriront.' : 'Reviens plus tard pour de nouveaux profils.'}
+          </div>
+          {cards.length > 0 && (
+            <button onClick={() => { setCurrentIndex(0); loadProfiles(userId) }}
+              style={{ padding: '12px 24px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+              Recommencer
+            </button>
+          )}
         </div>
       ) : (
         <>
+          {/* Cards zone */}
           <div style={{ flex: 1, position: 'relative', padding: '0 12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Carte suivante */}
             {nextProfile && (
               <div style={{ position: 'absolute', width: 'calc(100% - 40px)', height: 'calc(100% - 20px)', borderRadius: '28px', overflow: 'hidden', transform: 'scale(0.93) translateY(12px)', zIndex: 1 }}>
                 <img src={nextProfile.photo || nextProfile.founderPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.5)' }} />
               </div>
             )}
+
+            {/* Carte principale */}
             <div
               onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
               onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
               style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '28px', overflow: 'hidden', zIndex: 10, transform: `translateX(${dragX}px) translateY(${dragY * 0.1}px) rotate(${rot}deg)`, transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25,1,0.5,1)', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
               <img src={profile.photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)', pointerEvents: 'none' }} />
+
+              {/* Labels like/pass */}
               <div style={{ position: 'absolute', top: 28, left: 20, opacity: likeOp, transform: 'rotate(-12deg)', border: '3px solid #4ADE80', borderRadius: '10px', padding: '6px 14px', fontSize: '16px', fontWeight: '900', color: '#4ADE80', background: 'rgba(0,0,0,0.3)' }}>{likeLabel}</div>
               <div style={{ position: 'absolute', top: 28, right: 20, opacity: passOp, transform: 'rotate(12deg)', border: '3px solid #F87171', borderRadius: '10px', padding: '6px 14px', fontSize: '16px', fontWeight: '900', color: '#F87171', background: 'rgba(0,0,0,0.3)' }}>PASS</div>
+
+              {/* Score */}
               <div style={{ position: 'absolute', top: 20, right: 20, background: profile.score >= 90 ? 'rgba(249,115,22,0.9)' : 'rgba(109,40,217,0.9)', backdropFilter: 'blur(8px)', borderRadius: '12px', padding: '6px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '16px', fontWeight: '900', color: 'white', lineHeight: 1 }}>{profile.score}%</div>
                 <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Match IA</div>
               </div>
+
+              {/* Infos */}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 20px', pointerEvents: 'none' }}>
                 {isProjectMode ? (
                   <>
                     <div style={{ fontSize: '26px', fontWeight: '900', color: 'white', letterSpacing: '-0.5px', marginBottom: '4px' }}>{profile.firstName} {profile.lastName}</div>
-                    <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>{profile.poste}{profile.city ? ` · ${profile.city}` : ''}{profile.age ? `, ${profile.age} ans` : ''}</div>
+                    <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>
+                      {profile.poste}{profile.city ? ` · ${profile.city}` : ''}{profile.age ? `, ${profile.age} ans` : ''}
+                    </div>
                   </>
                 ) : (
                   <>
@@ -208,34 +295,55 @@ export default function SwipePage() {
                     </div>
                   </>
                 )}
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, marginBottom: '12px' }}>{isProjectMode ? profile.bio : profile.desc}</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, marginBottom: '12px' }}>
+                  {isProjectMode ? profile.bio : profile.desc}
+                </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '10px' }}>
                   {(isProjectMode ? profile.skills : profile.needs)?.slice(0, 4).map((s: string, i: number) => (
                     <span key={i} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', borderRadius: '20px', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>{s}</span>
                   ))}
-                  {!isProjectMode && profile.equity && <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(74,222,128,0.25)', color: '#4ADE80' }}>💎 {profile.equity}</span>}
+                  {!isProjectMode && profile.equity && (
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(74,222,128,0.25)', color: '#4ADE80' }}>💎 {profile.equity}</span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginRight: '2px' }}>Dispo en</span>
                   {['Flash', 'Side', 'Equity'].map(m => {
                     const available = profile.modes?.includes(m)
-                    return <span key={m} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '20px', background: available ? 'rgba(109,40,217,0.4)' : 'rgba(255,255,255,0.08)', color: available ? '#A78BFA' : 'rgba(255,255,255,0.25)', border: `1px solid ${available ? 'rgba(109,40,217,0.5)' : 'rgba(255,255,255,0.1)'}` }}>{m === 'Flash' ? '⚡' : m === 'Side' ? '🚀' : '💎'} {m}</span>
+                    return (
+                      <span key={m} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '20px', background: available ? 'rgba(109,40,217,0.4)' : 'rgba(255,255,255,0.08)', color: available ? '#A78BFA' : 'rgba(255,255,255,0.25)', border: `1px solid ${available ? 'rgba(109,40,217,0.5)' : 'rgba(255,255,255,0.1)'}` }}>
+                        {m === 'Flash' ? '⚡' : m === 'Side' ? '🚀' : '💎'} {m}
+                      </span>
+                    )
                   })}
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Boutons action */}
           <div style={{ padding: '12px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexShrink: 0, background: bg }}>
-            <button onClick={triggerPass} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            <button onClick={triggerPass}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(248,113,113,0.1)', border: `2px solid rgba(248,113,113,0.3)`, fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F87171', transition: 'transform 0.15s' }}>✕</button>
-            <button onClick={() => setShowInfo(true)} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            <button onClick={() => setShowInfo(true)}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${cardBorder}`, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: muted, transition: 'transform 0.15s' }}>ℹ️</button>
-            <button onClick={triggerLike} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-              style={{ width: 66, height: 66, borderRadius: '50%', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', fontSize: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(109,40,217,0.5)', transition: 'transform 0.15s' }}>{isInvestorMode ? '💎' : '♥'}</button>
-            <button onClick={triggerSuper} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            <button onClick={triggerLike}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+              style={{ width: 66, height: 66, borderRadius: '50%', background: 'linear-gradient(135deg,#6D28D9,#0891B2)', border: 'none', fontSize: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(109,40,217,0.5)', transition: 'transform 0.15s' }}>
+              {isInvestorMode ? '💎' : '♥'}
+            </button>
+            <button onClick={triggerSuper}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(34,211,238,0.08)', border: `1.5px solid rgba(34,211,238,0.3)`, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22D3EE', transition: 'transform 0.15s' }}>★</button>
-            <button onClick={() => setCurrentIndex(i => Math.max(0, i - 1))} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            <button onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: `1.5px solid ${cardBorder}`, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: muted, transition: 'transform 0.15s' }}>↩</button>
           </div>
         </>
@@ -244,7 +352,8 @@ export default function SwipePage() {
       {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
-          <div key={item.id} onClick={() => window.location.href = item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
+          <div key={item.id} onClick={() => window.location.href = item.href}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
             {item.id === 'swipe' ? (
               <>
                 <div style={{ width: 38, height: 38, borderRadius: '50%', border: `2px solid ${cfg.accent}`, background: cfg.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -260,7 +369,7 @@ export default function SwipePage() {
                   {item.id === 'explorer' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke={muted} strokeWidth="1.5" /><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke={muted} strokeWidth="1.5" strokeLinejoin="round" /></svg>}
                   {item.id === 'profil' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke={muted} strokeWidth="1.5" /><path d="M4 20c0-3.31 3.58-6 8-6s8 2.69 8 6" stroke={muted} strokeWidth="1.5" strokeLinecap="round" /></svg>}
                 </div>
-                <span style={{ fontSize: '8px', fontWeight: '600', textTransform: 'uppercase' as const, color: muted, letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '8px', fontWeight: '600', textTransform: 'uppercase' as const, color: (item as any).active ? cfg.accentLight : muted, letterSpacing: '0.04em' }}>
                   {item.id === 'home' ? 'Accueil' : item.id === 'chat' ? 'Chat' : item.id === 'explorer' ? 'Explorer' : 'Profil'}
                 </span>
               </>
@@ -277,20 +386,26 @@ export default function SwipePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
               <img src={isProjectMode ? profile.photo : profile.founderPhoto} alt="" style={{ width: 56, height: 56, borderRadius: isProjectMode ? '50%' : '14px', objectFit: 'cover' }} />
               <div>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: text }}>{isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name}</div>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: text }}>
+                  {isProjectMode ? `${profile.firstName} ${profile.lastName}` : profile.name}
+                </div>
                 <div style={{ fontSize: '12px', color: muted }}>{isProjectMode ? profile.poste : `${profile.founder} · ${profile.stage}`}</div>
                 <div style={{ fontSize: '13px', fontWeight: '800', color: profile.score >= 90 ? '#F97316' : cfg.accentLight, marginTop: '2px' }}>{profile.score}% de compatibilité</div>
               </div>
             </div>
-            <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6, marginBottom: '14px' }}>{isProjectMode ? profile.bio : profile.desc}</div>
+            <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6, marginBottom: '14px' }}>
+              {isProjectMode ? profile.bio : profile.desc}
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px', marginBottom: '20px' }}>
               {(isProjectMode ? profile.skills : profile.needs)?.map((s: string, i: number) => (
                 <span key={i} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', borderRadius: '20px', background: cfg.accentBg, color: cfg.accentLight }}>{s}</span>
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => { setShowInfo(false); triggerPass() }} style={{ flex: 1, padding: '14px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '14px', color: '#F87171', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>✕ Passer</button>
-              <button onClick={() => { setShowInfo(false); triggerLike() }} style={{ flex: 1, padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>{likeLabel} ♥</button>
+              <button onClick={() => { setShowInfo(false); triggerPass() }}
+                style={{ flex: 1, padding: '14px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '14px', color: '#F87171', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>✕ Passer</button>
+              <button onClick={() => { setShowInfo(false); triggerLike() }}
+                style={{ flex: 1, padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>{likeLabel} ♥</button>
             </div>
           </div>
         </div>
@@ -301,14 +416,18 @@ export default function SwipePage() {
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '24px' }}>
           <div style={{ background: 'linear-gradient(135deg,#6D28D9,#0891B2)', borderRadius: '28px', padding: '40px 28px', textAlign: 'center', width: '100%', boxShadow: '0 32px 80px rgba(0,0,0,0.5)' }}>
             <div style={{ fontSize: '52px', marginBottom: '14px' }}>{isInvestorMode ? '💎' : '🔥'}</div>
-            <div style={{ fontSize: '28px', fontWeight: '900', color: 'white', marginBottom: '10px' }}>{isInvestorMode ? 'Intérêt mutuel !' : 'C\'est un Match !'}</div>
+            <div style={{ fontSize: '28px', fontWeight: '900', color: 'white', marginBottom: '10px' }}>
+              {isInvestorMode ? 'Intérêt mutuel !' : 'C\'est un Match !'}
+            </div>
             <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', marginBottom: '6px' }}>{matchData.name} et toi avez swipé mutuellement.</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '30px' }}>Le chat est maintenant ouvert 💬</div>
             <button onClick={() => { setShowMatch(false); window.location.href = matchData.matchId ? `/chat?match=${matchData.matchId}` : '/chat' }}
               style={{ width: '100%', padding: '16px', background: 'white', border: 'none', borderRadius: '16px', color: '#6D28D9', fontSize: '15px', fontWeight: '800', cursor: 'pointer', marginBottom: '12px' }}>
               Envoyer un message →
             </button>
-            <button onClick={() => setShowMatch(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '13px', cursor: 'pointer' }}>Continuer à swiper</button>
+            <button onClick={() => setShowMatch(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '13px', cursor: 'pointer' }}>
+              Continuer à swiper
+            </button>
           </div>
         </div>
       )}
