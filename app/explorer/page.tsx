@@ -1,71 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useMode, Mode } from '../context/ModeContext'
 import { supabase } from '../lib/supabase'
 
 const MODE_CONFIG = {
-  talent: {
-    accent: '#6D28D9', accentLight: '#A78BFA', accentBg: 'rgba(109,40,217,0.1)',
-    gradient: 'linear-gradient(135deg, #6D28D9, #8B5CF6)',
-    title: 'Explorer', sub: 'Recherche par nom, compétences ou secteur',
-    ctaLabel: '♥ Je suis intéressé(e)',
-  },
-  project: {
-    accent: '#0891B2', accentLight: '#22D3EE', accentBg: 'rgba(8,145,178,0.1)',
-    gradient: 'linear-gradient(135deg, #0891B2, #06B6D4)',
-    title: 'Explorer', sub: 'Recherche des talents par compétence ou nom',
-    ctaLabel: '♥ Proposer ma candidature',
-  },
-  investor: {
-    accent: '#B45309', accentLight: '#FCD34D', accentBg: 'rgba(180,83,9,0.1)',
-    gradient: 'linear-gradient(135deg, #B45309, #F59E0B)',
-    title: 'Explorer', sub: 'Recherche des projets par secteur ou fondateur',
-    ctaLabel: '💎 Demander le pitch deck',
-  },
+  talent: { accent: '#6D28D9', accentLight: '#A78BFA', accentBg: 'rgba(109,40,217,0.1)', gradient: 'linear-gradient(135deg,#6D28D9,#8B5CF6)' },
+  project: { accent: '#0891B2', accentLight: '#22D3EE', accentBg: 'rgba(8,145,178,0.1)', gradient: 'linear-gradient(135deg,#0891B2,#06B6D4)' },
+  investor: { accent: '#B45309', accentLight: '#FCD34D', accentBg: 'rgba(180,83,9,0.1)', gradient: 'linear-gradient(135deg,#B45309,#F59E0B)' },
 }
 
-const STAGES = ['Idée', 'Prototype', 'Lancé', 'Croissance']
-const COLLAB_MODES = ['Flash', 'Side', 'Equity']
-const STAGE_COLORS: Record<string, string> = {
-  'Idée': '#F97316', 'Prototype': '#8B5CF6', 'Lancé': '#4ADE80', 'Croissance': '#06B6D4'
-}
-
-function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string }) {
-  const { activeMode, setActiveMode, userModes, activateMode } = useMode()
-  const modes = [
-    { id: 'talent' as Mode, emoji: '⚡', label: 'Talent' },
-    { id: 'project' as Mode, emoji: '🚀', label: 'Projet' },
-    { id: 'investor' as Mode, emoji: '💎', label: 'Invest' },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: '6px' }}>
-      {modes.map(m => {
-        const isActive = activeMode === m.id
-        const has = userModes.includes(m.id)
-        const cfg = MODE_CONFIG[m.id]
-        return (
-          <button key={m.id} onClick={() => has ? setActiveMode(m.id) : activateMode(m.id)}
-            style={{ padding: '5px 12px', borderRadius: '20px', border: `1px solid ${isActive ? cfg.accent : cardBorder}`, background: isActive ? cfg.accentBg : 'transparent', color: isActive ? cfg.accentLight : muted, fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
-            {m.emoji} {m.label}{!has && <span style={{ color: '#F97316', fontSize: '9px' }}>+</span>}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
+const QUICK_TAGS = ['React', 'Figma', 'Marketing', 'Finance', 'IA', 'No-code', 'Design', 'Sales', 'Python', 'Vidéo']
 
 export default function ExplorerPage() {
-  const { activeMode, userModes, activateMode, dark, setDark } = useMode()
-  const [userId, setUserId] = useState('')
-  const [items, setItems] = useState<any[]>([])
+  const { activeMode, dark, setDark, unreadNotifCount } = useMode()
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [search, setSearch] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
-  const [filterStage, setFilterStage] = useState<string[]>([])
-  const [filterMode, setFilterMode] = useState<string[]>([])
   const [selected, setSelected] = useState<any>(null)
-  const [sendingMsg, setSendingMsg] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState('')
+  const debounceRef = useRef<any>(null)
 
   const bg = dark ? '#08070F' : '#F4F2FF'
   const card = dark ? '#111019' : '#FFFFFF'
@@ -75,442 +29,223 @@ export default function ExplorerPage() {
   const muted = dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
   const hint = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'
   const navBg = dark ? '#111019' : '#FFFFFF'
-
-  const hasMode = userModes.includes(activeMode)
   const cfg = MODE_CONFIG[activeMode]
-  const isProjectMode = activeMode === 'project'
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
-      setUserId(user.id)
+      setCurrentUserId(user.id)
     }
     init()
   }, [])
 
-  // Charger seulement quand on tape
   useEffect(() => {
-    if (!userId) return
-    if (search.trim().length < 2 && filterStage.length === 0 && filterMode.length === 0) {
-      setItems([])
-      return
-    }
-    const timeout = setTimeout(() => loadItems(), 300)
-    return () => clearTimeout(timeout)
-  }, [search, filterStage, filterMode, activeMode, userId])
+    if (query.length < 2) { setResults([]); return }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => search(query), 300)
+    return () => clearTimeout(debounceRef.current)
+  }, [query])
 
-  async function loadItems() {
-    if (!userId) return
+  async function search(q: string) {
     setLoading(true)
     try {
-      if (isProjectMode) {
-        const { data: talentData } = await supabase.from('talent_profiles').select('*').neq('user_id', userId)
-        const { data: profileData } = await supabase.from('profiles').select('id, first_name, last_name, age, city, avatar_url').neq('id', userId)
+      const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name, avatar_url, city').neq('id', currentUserId)
+      const { data: talents } = await supabase.from('talent_profiles').select('user_id, skills, statut, bio, collab_modes')
+      const { data: projects } = await supabase.from('project_profiles').select('user_id, project_name, sectors, stage, description')
 
-        const merged = (talentData || []).map((t, i) => {
-          const p = profileData?.find(pr => pr.id === t.user_id)
-          return {
-            id: t.id, user_id: t.user_id, isProject: false,
-            firstName: p?.first_name || 'Utilisateur', lastName: p?.last_name || '',
-            photo: p?.avatar_url || `https://i.pravatar.cc/150?u=${t.user_id}`,
-            poste: t.statut || 'Talent', city: p?.city || '', age: p?.age || null,
-            score: Math.floor(Math.random() * 20) + 78,
-            bio: t.bio || '', skills: t.skills || [], modes: t.collab_modes || [],
-            hours: t.hours_per_week || '',
-          }
-        })
-        setItems(merged)
-      } else {
-        const { data: projectData } = await supabase.from('project_profiles').select('*').neq('user_id', userId)
-        const { data: profileData } = await supabase.from('profiles').select('id, first_name, last_name, avatar_url').neq('id', userId)
+      const enriched: any[] = []
+      const ql = q.toLowerCase()
 
-        const merged = (projectData || []).map((p, i) => {
-          const profile = profileData?.find(pr => pr.id === p.user_id)
-          return {
-            id: p.id, user_id: p.user_id, isProject: true,
-            name: p.project_name || 'Projet sans nom',
-            founder: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Fondateur',
-            founderPhoto: profile?.avatar_url || `https://i.pravatar.cc/100?u=${p.user_id}`,
-            photo: `https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80`,
-            stage: p.stage || 'Idée', stageColor: STAGE_COLORS[p.stage] || '#A78BFA',
-            sector: p.sectors?.[0] || 'Tech',
-            desc: p.description || p.founder_bio || '',
-            needs: p.needs || [], equity: p.equity || '', budget: p.budget || null,
-            score: Math.floor(Math.random() * 20) + 78,
-            modes: p.collab_modes || [], workMode: p.work_mode || 'Remote',
-            team: p.team_size || 1,
-          }
-        })
-        setItems(merged)
-      }
+      profiles?.forEach(p => {
+        const fullName = `${p.first_name} ${p.last_name}`.toLowerCase()
+        const talent = talents?.find(t => t.user_id === p.id)
+        const project = projects?.find(pr => pr.user_id === p.id)
+
+        const matchName = fullName.includes(ql)
+        const matchSkill = talent?.skills?.some((s: string) => s.toLowerCase().includes(ql))
+        const matchProject = project?.project_name?.toLowerCase().includes(ql)
+        const matchSector = project?.sectors?.some((s: string) => s.toLowerCase().includes(ql))
+
+        if (matchName || matchSkill || matchProject || matchSector) {
+          enriched.push({
+            id: p.id, firstName: p.first_name, lastName: p.last_name,
+            photo: p.avatar_url || `https://i.pravatar.cc/150?u=${p.id}`,
+            city: p.city || '',
+            talent, project,
+          })
+        }
+      })
+
+      setResults(enriched.slice(0, 20))
     } catch (e) { console.error(e) }
     setLoading(false)
   }
 
-  const filtered = items.filter((item: any) => {
-    const q = search.toLowerCase()
-    const matchSearch = q.length < 2 || (
-      item.isProject
-        ? `${item.name || ''} ${item.sector || ''} ${item.founder || ''} ${(item.needs || []).join(' ')}`.toLowerCase().includes(q)
-        : `${item.firstName || ''} ${item.lastName || ''} ${item.poste || ''} ${(item.skills || []).join(' ')}`.toLowerCase().includes(q)
-    )
-    const matchStage = filterStage.length === 0 || (item.isProject && filterStage.includes(item.stage))
-    const matchMode = filterMode.length === 0 || item.modes?.some((m: string) => filterMode.includes(m))
-    return matchSearch && matchStage && matchMode
-  })
+  async function sendMessage(userId: string) {
+    if (!currentUserId) return
+    const { data: existing } = await supabase.from('matches').select('id')
+      .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${userId}),and(user1_id.eq.${userId},user2_id.eq.${currentUserId})`)
+      .single()
 
-  async function handleContact(item: any) {
-    if (!userId || !item.user_id || sendingMsg) return
-    setSendingMsg(true)
-    try {
-      // Chercher un match existant
-      const { data: existing } = await supabase
-        .from('matches').select('id')
-        .or(`and(user1_id.eq.${userId},user2_id.eq.${item.user_id}),and(user1_id.eq.${item.user_id},user2_id.eq.${userId})`)
-        .single()
-
-      let matchId = existing?.id
-
-      if (!matchId) {
-        // Créer le match
-        const { data: newMatch } = await supabase.from('matches').insert({
-          user1_id: userId,
-          user2_id: item.user_id,
-          mode1: activeMode,
-          mode2: activeMode,
-        }).select().single()
-        matchId = newMatch?.id
-      }
-
-      window.location.href = matchId ? `/chat?match=${matchId}` : '/chat'
-    } catch (e) {
-      console.error(e)
-      window.location.href = '/chat'
+    if (existing) {
+      window.location.href = `/chat?match=${existing.id}`
+      return
     }
-    setSendingMsg(false)
+
+    const { data: newMatch } = await supabase.from('matches').insert({
+      user1_id: currentUserId, user2_id: userId, mode1: activeMode, mode2: activeMode,
+    }).select().single()
+
+    if (newMatch) window.location.href = `/chat?match=${newMatch.id}`
   }
 
   const navItems = [
     { id: 'home', href: '/home' }, { id: 'chat', href: '/chat' },
-    { id: 'swipe', href: '/swipe' }, { id: 'explorer', href: '/explorer', active: true },
-    { id: 'profil', href: '/profil' },
+    { id: 'swipe', href: '/swipe' }, { id: 'explorer', href: '/explorer', active: true }, { id: 'profil', href: '/profil' },
   ]
 
-  // ── DETAIL VIEW ──
   if (selected) {
     return (
       <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow: 'hidden' }}>
-        <div style={{ flexShrink: 0, position: 'relative' }}>
-          <img src={selected.photo} alt="" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))' }} />
-          <button onClick={() => setSelected(null)}
-            style={{ position: 'absolute', top: 44, left: 16, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <div style={{ padding: '44px 20px 16px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${cardBorder}`, flexShrink: 0 }}>
+          <button onClick={() => setSelected(null)} style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <div style={{ position: 'absolute', top: 44, right: 16, background: selected.score >= 90 ? 'rgba(249,115,22,0.9)' : 'rgba(109,40,217,0.9)', backdropFilter: 'blur(8px)', borderRadius: '12px', padding: '6px 12px', textAlign: 'center' }}>
-            <div style={{ fontSize: '16px', fontWeight: '900', color: 'white' }}>{selected.score}%</div>
-            <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Match IA</div>
-          </div>
-          <div style={{ position: 'absolute', bottom: 14, left: 16, right: 80 }}>
-            {selected.isProject ? (
-              <>
-                <div style={{ fontSize: '22px', fontWeight: '900', color: 'white' }}>{selected.name}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                  <img src={selected.founderPhoto} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.5)' }} />
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>par {selected.founder}</span>
-                  <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px', background: (selected.stageColor || '#A78BFA') + 'cc', color: 'white' }}>{selected.stage}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: '22px', fontWeight: '900', color: 'white' }}>{selected.firstName} {selected.lastName}</div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '2px' }}>{selected.poste}{selected.city ? ` · ${selected.city}` : ''}</div>
-              </>
-            )}
-          </div>
+          <div style={{ fontSize: '16px', fontWeight: '800', color: text }}>Profil</div>
         </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-          {/* Tags */}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '14px' }}>
-            {selected.isProject && (
-              <>
-                <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: 'rgba(6,182,212,0.1)', color: '#22D3EE', border: '1px solid rgba(6,182,212,0.2)' }}>{selected.sector}</span>
-                <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px', background: surface, color: muted, border: `1px solid ${cardBorder}` }}>🌐 {selected.workMode}</span>
-              </>
-            )}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+            <img src={selected.photo} alt="" style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${cfg.accent}` }} />
+            <div>
+              <div style={{ fontSize: '20px', fontWeight: '800', color: text }}>{selected.firstName} {selected.lastName}</div>
+              {selected.city && <div style={{ fontSize: '12px', color: muted, marginTop: '2px' }}>📍 {selected.city}</div>}
+            </div>
           </div>
 
-          {/* Description */}
-          {(selected.desc || selected.bio) && (
-            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>
-                {selected.isProject ? 'À propos du projet' : 'Bio'}
-              </div>
-              <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>
-                {selected.isProject ? selected.desc : selected.bio}
-              </div>
-            </div>
-          )}
-
-          {/* Skills / Needs */}
-          {(selected.isProject ? selected.needs : selected.skills)?.length > 0 && (
-            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>
-                {selected.isProject ? 'Ils recherchent' : 'Compétences'}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
-                {(selected.isProject ? selected.needs : selected.skills).map((s: string, i: number) => (
-                  <span key={i} style={{ fontSize: '12px', fontWeight: '600', padding: '5px 12px', borderRadius: '20px', background: cfg.accentBg, color: cfg.accentLight, border: `1px solid ${cfg.accent}30` }}>{s}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Financials projet */}
-          {selected.isProject && (selected.equity || selected.budget || selected.team) && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-              {[
-                { label: 'Equity', value: selected.equity || '—', color: '#4ADE80' },
-                { label: 'Budget/mois', value: selected.budget || '—', color: '#F97316' },
-                { label: 'Équipe', value: `${selected.team} pers.`, color: cfg.accentLight },
-                { label: 'Mode', value: selected.workMode, color: muted },
-              ].map((item, i) => (
-                <div key={i} style={{ background: card, borderRadius: '14px', border: `1px solid ${cardBorder}`, padding: '12px 14px' }}>
-                  <div style={{ fontSize: '9px', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '5px' }}>{item.label}</div>
-                  <div style={{ fontSize: '14px', fontWeight: '800', color: item.color }}>{item.value}</div>
+          {selected.talent && (
+            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '16px', marginBottom: '12px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#A78BFA', marginBottom: '10px' }}>⚡ Talent</div>
+              {selected.talent.statut && <div style={{ fontSize: '13px', color: text, marginBottom: '8px' }}>{selected.talent.statut}</div>}
+              {selected.talent.bio && <div style={{ fontSize: '12px', color: muted, lineHeight: 1.6, marginBottom: '10px' }}>{selected.talent.bio}</div>}
+              {selected.talent.skills?.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+                  {selected.talent.skills.map((s: string, i: number) => (
+                    <span key={i} style={{ fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '20px', background: 'rgba(109,40,217,0.1)', color: '#A78BFA', border: '1px solid rgba(109,40,217,0.2)' }}>{s}</span>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
 
-          {/* Dispo talent */}
-          {!selected.isProject && (selected.hours || selected.modes?.length > 0) && (
-            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px' }}>Disponibilité</div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
-                {selected.hours && <span style={{ fontSize: '12px', fontWeight: '600', padding: '5px 12px', borderRadius: '20px', background: surface, color: muted }}>🕐 {selected.hours}</span>}
-                {selected.modes?.map((m: string) => (
-                  <span key={m} style={{ fontSize: '12px', fontWeight: '600', padding: '5px 12px', borderRadius: '20px', background: cfg.accentBg, color: cfg.accentLight }}>
-                    {m === 'Flash' ? '⚡' : m === 'Side' ? '🚀' : '💎'} {m}
-                  </span>
-                ))}
-              </div>
+          {selected.project && (
+            <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '16px', marginBottom: '12px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#22D3EE', marginBottom: '10px' }}>🚀 Projet</div>
+              {selected.project.project_name && <div style={{ fontSize: '15px', fontWeight: '700', color: text, marginBottom: '4px' }}>{selected.project.project_name}</div>}
+              {selected.project.stage && <div style={{ fontSize: '11px', color: muted, marginBottom: '8px' }}>Stade : {selected.project.stage}</div>}
+              {selected.project.description && <div style={{ fontSize: '12px', color: muted, lineHeight: 1.6 }}>{selected.project.description}</div>}
             </div>
           )}
 
-          <div style={{ height: 8 }} />
-        </div>
-
-        {/* CTA */}
-        <div style={{ padding: '12px 16px 24px', flexShrink: 0 }}>
-          <button
-            onClick={() => handleContact(selected)}
-            disabled={sendingMsg}
-            style={{ width: '100%', padding: '16px', background: sendingMsg ? surface : cfg.gradient, border: 'none', borderRadius: '16px', color: sendingMsg ? muted : 'white', fontSize: '15px', fontWeight: '800', cursor: sendingMsg ? 'default' : 'pointer', boxShadow: sendingMsg ? 'none' : `0 8px 32px ${cfg.accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="white" strokeWidth="2" /></svg>
-            {sendingMsg ? 'Ouverture...' : 'Envoyer un message'}
+          <button onClick={() => sendMessage(selected.id)}
+            style={{ width: '100%', padding: '14px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer', marginTop: '8px' }}>
+            💬 Envoyer un message
           </button>
         </div>
       </div>
     )
   }
 
-  // ── LIST VIEW ──
   return (
-    <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow: 'hidden', transition: 'background 0.3s' }}>
+    <div style={{ height: '100%', overflow: 'hidden', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', transition: 'background 0.3s' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-      <div style={{ padding: '44px 20px 10px', flexShrink: 0 }}>
+      <div style={{ padding: '44px 20px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <div>
-            <div style={{ fontSize: '22px', fontWeight: '900', color: text, letterSpacing: '-0.5px', marginBottom: '2px' }}>{cfg.title}</div>
-            <div style={{ fontSize: '12px', color: muted }}>{cfg.sub}</div>
-          </div>
-          <button onClick={() => setDark(!dark)} style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {dark ? '☀️' : '🌙'}
-          </button>
-        </div>
-        <ModeSelector muted={muted} cardBorder={cardBorder} />
-      </div>
-
-      {/* Search + filters */}
-      <div style={{ padding: '8px 20px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <circle cx="11" cy="11" r="8" stroke={muted} strokeWidth="2" />
-              <path d="M21 21L16.65 16.65" stroke={muted} strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder={isProjectMode ? 'Nom, compétence...' : 'Nom, secteur, projet...'}
-              style={{ width: '100%', padding: '11px 14px 11px 36px', background: card, border: `1.5px solid ${cardBorder}`, borderRadius: '14px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
-              onFocus={e => (e.currentTarget.style.borderColor = cfg.accent)}
-              onBlur={e => (e.currentTarget.style.borderColor = cardBorder)}
-            />
-          </div>
-          <button onClick={() => setShowFilters(!showFilters)}
-            style={{ padding: '11px 14px', background: showFilters ? cfg.accentBg : card, border: `1.5px solid ${showFilters ? cfg.accent : cardBorder}`, borderRadius: '14px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: showFilters ? cfg.accentLight : muted, display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, transition: 'all 0.15s' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22 3H2l8 9.46V19l4 2V12.46L22 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            {(filterStage.length + filterMode.length) > 0 && (
-              <span style={{ background: cfg.accent, color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: '9px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {filterStage.length + filterMode.length}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {showFilters && (
-          <div style={{ background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, padding: '14px', marginBottom: '10px' }}>
-            {!isProjectMode && (
-              <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Stade</div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
-                  {STAGES.map(s => {
-                    const active = filterStage.includes(s)
-                    return (
-                      <button key={s} onClick={() => setFilterStage(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s])}
-                        style={{ padding: '5px 12px', borderRadius: '20px', border: `1px solid ${active ? cfg.accent : cardBorder}`, background: active ? cfg.accentBg : 'transparent', color: active ? cfg.accentLight : muted, fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s' }}>
-                        {active ? '✓ ' : ''}{s}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-            <div>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: hint, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Mode de collaboration</div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {COLLAB_MODES.map(m => {
-                  const active = filterMode.includes(m)
-                  const icons: Record<string, string> = { Flash: '⚡', Side: '🚀', Equity: '💎' }
-                  return (
-                    <button key={m} onClick={() => setFilterMode(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m])}
-                      style={{ padding: '5px 12px', borderRadius: '20px', border: `1px solid ${active ? cfg.accent : cardBorder}`, background: active ? cfg.accentBg : 'transparent', color: active ? cfg.accentLight : muted, fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s' }}>
-                      {icons[m]} {m}
-                    </button>
-                  )
-                })}
-              </div>
+          <div style={{ fontSize: '20px', fontWeight: '800', color: text }}>Explorer</div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {/* Cloche */}
+            <div onClick={() => window.location.href = '/notifications'} style={{ position: 'relative', cursor: 'pointer' }}>
+              <button style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔔</button>
+              {unreadNotifCount > 0 && <div style={{ position: 'absolute', top: -3, right: -3, width: 16, height: 16, background: '#F97316', borderRadius: '50%', fontSize: '9px', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${bg}` }}>{unreadNotifCount}</div>}
             </div>
-            {(filterStage.length + filterMode.length) > 0 && (
-              <button onClick={() => { setFilterStage([]); setFilterMode([]) }}
-                style={{ marginTop: '10px', background: 'none', border: 'none', color: '#F87171', fontSize: '11px', cursor: 'pointer', fontWeight: '600', padding: 0 }}>
-                × Réinitialiser les filtres
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Contenu */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 8px' }}>
-        {!hasMode ? (
-          <div style={{ background: card, borderRadius: '20px', border: `1px solid rgba(109,40,217,0.2)`, padding: '28px 20px', textAlign: 'center', margin: '8px 0' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>{activeMode === 'talent' ? '⚡' : activeMode === 'project' ? '🚀' : '💎'}</div>
-            <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>Profil non créé</div>
-            <div style={{ fontSize: '13px', color: muted, marginBottom: '18px' }}>Active ce profil pour explorer.</div>
-            <button onClick={() => activateMode(activeMode)} style={{ width: '100%', padding: '13px', background: cfg.gradient, border: 'none', borderRadius: '14px', color: 'white', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
-              Créer mon profil
+            <button onClick={() => setDark(!dark)} style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {dark ? '☀️' : '🌙'}
             </button>
           </div>
+        </div>
 
-        ) : search.trim().length < 2 && filterStage.length === 0 && filterMode.length === 0 ? (
-          // État par défaut — invite à chercher
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
-            <div style={{ fontSize: '16px', fontWeight: '800', color: text, marginBottom: '8px' }}>Recherche un profil</div>
-            <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6, marginBottom: '24px' }}>
-              {isProjectMode
-                ? 'Tape un prénom, une compétence ou un statut pour trouver des talents.'
-                : 'Tape un nom de projet, un secteur ou un fondateur.'}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
-              {(isProjectMode
-                ? ['Figma', 'React', 'Marketing', 'TikTok', 'Beatmaking']
-                : ['GreenTech', 'SaaS', 'FinTech', 'EdTech', 'HealthTech']
-              ).map(tag => (
-                <button key={tag} onClick={() => setSearch(tag)}
-                  style={{ padding: '8px 16px', background: cfg.accentBg, border: `1px solid ${cfg.accent}30`, borderRadius: '20px', color: cfg.accentLight, fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>
-                  {tag}
-                </button>
-              ))}
-            </div>
+        <div style={{ position: 'relative', marginBottom: '12px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <circle cx="11" cy="11" r="8" stroke={muted} strokeWidth="2" /><path d="M21 21L16.65 16.65" stroke={muted} strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Recherche un talent, projet, compétence..."
+            style={{ width: '100%', padding: '12px 14px 12px 36px', background: surface, border: `1.5px solid ${query.length > 0 ? cfg.accent : cardBorder}`, borderRadius: '14px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit', transition: 'border-color 0.2s' }} />
+          {query && <button onClick={() => setQuery('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: muted, cursor: 'pointer', fontSize: '16px' }}>×</button>}
+        </div>
+
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+          {QUICK_TAGS.map((tag, i) => (
+            <button key={i} onClick={() => setQuery(tag)}
+              style={{ padding: '5px 12px', borderRadius: '20px', border: `1px solid ${query === tag ? cfg.accent : cardBorder}`, background: query === tag ? cfg.accentBg : 'transparent', color: query === tag ? cfg.accentLight : muted, fontSize: '11px', fontWeight: '600', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}>
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px' }}>
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid ${cfg.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
           </div>
+        )}
 
-        ) : loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px' }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${cfg.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+        {!loading && query.length < 2 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50%', textAlign: 'center', gap: '12px' }}>
+            <div style={{ fontSize: '48px' }}>🔭</div>
+            <div style={{ fontSize: '16px', fontWeight: '800', color: text }}>Cherche qui tu veux</div>
+            <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>Tape un nom, une compétence ou un secteur</div>
           </div>
+        )}
 
-        ) : filtered.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>😕</div>
-            <div style={{ fontSize: '15px', fontWeight: '800', color: text, marginBottom: '8px' }}>Aucun résultat</div>
-            <div style={{ fontSize: '12px', color: muted }}>Essaie un autre mot-clé</div>
+        {!loading && query.length >= 2 && results.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50%', textAlign: 'center', gap: '12px' }}>
+            <div style={{ fontSize: '40px' }}>😕</div>
+            <div style={{ fontSize: '15px', fontWeight: '700', color: text }}>Aucun résultat</div>
+            <div style={{ fontSize: '13px', color: muted }}>Essaie avec d'autres mots clés</div>
           </div>
+        )}
 
-        ) : (
-          <>
-            <div style={{ fontSize: '11px', color: hint, marginBottom: '10px', paddingLeft: '2px' }}>
-              {filtered.length} résultat{filtered.length > 1 ? 's' : ''} pour "{search}"
-            </div>
-            {filtered.map((item: any) => (
-              <div key={item.id} onClick={() => setSelected(item)}
-                style={{ marginBottom: '10px', borderRadius: '20px', overflow: 'hidden', border: `1.5px solid ${cardBorder}`, background: card, cursor: 'pointer', transition: 'all 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = cfg.accent + '60')}
+        {!loading && results.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {results.map(r => (
+              <div key={r.id} onClick={() => setSelected(r)}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: card, borderRadius: '16px', border: `1px solid ${cardBorder}`, cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = cfg.accent + '50')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = cardBorder)}>
-                <div style={{ padding: '14px' }}>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                      <img
-                        src={item.isProject ? item.founderPhoto : item.photo}
-                        alt=""
-                        style={{ width: 54, height: 54, borderRadius: item.isProject ? '14px' : '50%', objectFit: 'cover', border: `1.5px solid ${cardBorder}` }}
-                      />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '2px' }}>
-                        <div style={{ fontSize: '15px', fontWeight: '800', color: text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                          {item.isProject ? item.name : `${item.firstName} ${item.lastName}`}
-                        </div>
-                        <div style={{ fontSize: '14px', fontWeight: '900', color: item.score >= 90 ? '#F97316' : cfg.accentLight, flexShrink: 0 }}>{item.score}%</div>
-                      </div>
-                      {item.isProject ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                          <span style={{ fontSize: '11px', color: muted }}>{item.founder}</span>
-                          <span style={{ fontSize: '10px', fontWeight: '600', padding: '1px 7px', borderRadius: '20px', background: (item.stageColor || '#A78BFA') + '25', color: item.stageColor || '#A78BFA' }}>{item.stage}</span>
-                          <span style={{ fontSize: '10px', color: muted }}>· {item.sector}</span>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '11px', color: muted, marginBottom: '6px' }}>
-                          {item.poste}{item.city ? ` · ${item.city}` : ''}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' as const }}>
-                        {(item.isProject ? item.needs : item.skills)?.slice(0, 3).map((t: string, j: number) => (
-                          <span key={j} style={{ fontSize: '10px', fontWeight: '600', padding: '2px 8px', borderRadius: '20px', background: surface, color: muted, border: `1px solid ${hint}` }}>{t}</span>
-                        ))}
-                      </div>
-                    </div>
+                <img src={r.photo} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${cardBorder}`, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: text, marginBottom: '2px' }}>{r.firstName} {r.lastName}</div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
+                    {r.talent?.skills?.slice(0, 2).map((s: string, i: number) => (
+                      <span key={i} style={{ fontSize: '10px', fontWeight: '600', padding: '2px 7px', borderRadius: '20px', background: 'rgba(109,40,217,0.1)', color: '#A78BFA' }}>{s}</span>
+                    ))}
+                    {r.project?.project_name && (
+                      <span style={{ fontSize: '10px', fontWeight: '600', padding: '2px 7px', borderRadius: '20px', background: 'rgba(8,145,178,0.1)', color: '#22D3EE' }}>🚀 {r.project.project_name}</span>
+                    )}
                   </div>
                 </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke={muted} strokeWidth="2" strokeLinecap="round" /></svg>
               </div>
             ))}
-            <div style={{ height: 8 }} />
-          </>
+          </div>
         )}
       </div>
 
-      {/* Bottom nav */}
       <div style={{ background: navBg, borderTop: `1px solid ${cardBorder}`, paddingBottom: 16, paddingTop: 8, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexShrink: 0 }}>
         {navItems.map(item => (
-          <div key={item.id} onClick={() => window.location.href = item.href}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
+          <div key={item.id} onClick={() => window.location.href = item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer', flex: 1 }}>
             {item.id === 'swipe' ? (
               <>
                 <div style={{ width: 38, height: 38, borderRadius: '50%', border: `2px solid ${cfg.accent}`, background: cfg.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
