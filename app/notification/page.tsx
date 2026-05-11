@@ -24,7 +24,6 @@ export default function NotificationsPage() {
 
   return (
     <div style={{ height: '100%', background: bg, display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', overflow: 'hidden' }}>
-
       <div style={{ padding: '44px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, borderBottom: `1px solid ${cardBorder}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => window.history.back()}
@@ -53,28 +52,20 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {notifications.map(notif => (
+            {notifications.map((notif: any) => (
               <div key={notif.id}
                 onClick={() => {
                   markNotifRead(notif.id)
                   if (notif.matchId) window.location.href = `/chat?match=${notif.matchId}`
                 }}
                 style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px', background: notif.read ? card : dark ? 'rgba(109,40,217,0.08)' : 'rgba(109,40,217,0.04)', borderRadius: '16px', border: `1px solid ${notif.read ? cardBorder : 'rgba(109,40,217,0.2)'}`, cursor: 'pointer', transition: 'all 0.15s' }}>
-
-                {/* Icône */}
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: notif.type === 'match' ? 'linear-gradient(135deg,#6D28D9,#0891B2)' : surface, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, border: `1px solid ${cardBorder}` }}>
                   {notif.type === 'match' ? '🔥' : '💬'}
                 </div>
-
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: notif.read ? '600' : '800', color: text, marginBottom: '2px' }}>
-                    {notif.title}
-                  </div>
-                  <div style={{ fontSize: '12px', color: muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                    {notif.body}
-                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: notif.read ? '600' : '800', color: text, marginBottom: '2px' }}>{notif.title}</div>
+                  <div style={{ fontSize: '12px', color: muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{notif.body}</div>
                 </div>
-
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
                   <div style={{ fontSize: '10px', color: muted }}>{timeAgo(notif.createdAt)}</div>
                   {!notif.read && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#6D28D9' }} />}
