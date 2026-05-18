@@ -177,22 +177,12 @@ function calcCompletion(mode: string, data: any): number {
   return 0
 }
 
-// ── TOUS LES SOUS-COMPOSANTS SONT EN DEHORS DE ProfilPage ──
-// C'est la clé : si un composant est défini DANS ProfilPage,
-// React le recrée à chaque render → perd le focus
-
 function Section({ title, children, card, cardBorder, hint }: {
-  title: string
-  children: React.ReactNode
-  card: string
-  cardBorder: string
-  hint: string
+  title: string; children: React.ReactNode; card: string; cardBorder: string; hint: string
 }) {
   return (
     <div style={{ background: card, border: `1px solid ${cardBorder}`, borderRadius: '18px', padding: '16px', marginBottom: '10px' }}>
-      <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: hint, marginBottom: '12px' }}>
-        {title}
-      </div>
+      <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: hint, marginBottom: '12px' }}>{title}</div>
       {children}
     </div>
   )
@@ -390,9 +380,8 @@ function ModeSelector({ muted, cardBorder }: { muted: string; cardBorder: string
   )
 }
 
-// ── PAGE PRINCIPALE ──
 export default function ProfilPage() {
-  const { activeMode, userModes, activateMode, dark, setDark } = useMode()
+  const { activeMode, userModes, activateMode, dark, setDark, unreadNotifCount } = useMode()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -602,6 +591,15 @@ export default function ProfilPage() {
               style={{ padding: '7px 14px', background: editing ? cfg.accentBg : surface, border: `1.5px solid ${editing ? cfg.accent : cardBorder}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: editing ? cfg.accentLight : muted, transition: 'all 0.2s' }}>
               {saving ? '⏳' : editing ? '✓ Sauver' : '✏️ Éditer'}
             </button>
+            {/* Cloche notifications */}
+            <div onClick={() => window.location.href = '/notifications'} style={{ position: 'relative', cursor: 'pointer' }}>
+              <button style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔔</button>
+              {unreadNotifCount > 0 && (
+                <div style={{ position: 'absolute', top: -3, right: -3, width: 16, height: 16, background: '#F97316', borderRadius: '50%', fontSize: '9px', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${bg}` }}>
+                  {unreadNotifCount}
+                </div>
+              )}
+            </div>
             <button onClick={() => setDark(!dark)} style={{ background: 'none', border: `1px solid ${cardBorder}`, borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {dark ? '☀️' : '🌙'}
             </button>
@@ -630,7 +628,6 @@ export default function ProfilPage() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '17px', fontWeight: '800', color: text, marginBottom: '4px' }}>{displayName}</div>
-              {/* Statut */}
               <div style={{ marginBottom: '4px', position: 'relative' }}>
                 {!editing ? (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', background: cfg.accentBg, fontSize: '11px', fontWeight: '600', color: cfg.accentLight }}>
@@ -658,14 +655,9 @@ export default function ProfilPage() {
                   </div>
                 )}
               </div>
-              {/* Ville */}
               {editing ? (
-                <input
-                  value={editCity}
-                  onChange={e => setEditCity(e.target.value)}
-                  placeholder="Ta ville..."
-                  style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '8px', padding: '4px 10px', color: text, fontSize: '11px', outline: 'none', fontFamily: 'inherit', width: '140px' }}
-                />
+                <input value={editCity} onChange={e => setEditCity(e.target.value)} placeholder="Ta ville..."
+                  style={{ background: surface, border: `1px solid ${cardBorder}`, borderRadius: '8px', padding: '4px 10px', color: text, fontSize: '11px', outline: 'none', fontFamily: 'inherit', width: '140px' }} />
               ) : (
                 <div style={{ fontSize: '11px', color: muted }}>
                   {displayCity ? `📍 ${displayCity}` : '📍 Ajoute ta ville'}{displayAge ? ` · ${displayAge}` : ''}
@@ -674,7 +666,6 @@ export default function ProfilPage() {
             </div>
           </div>
 
-          {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px', marginBottom: '14px' }}>
             {cfg.stats.map((s, i) => (
               <div key={i} style={{ background: surface, borderRadius: '12px', padding: '10px 8px', textAlign: 'center' }}>
@@ -684,7 +675,6 @@ export default function ProfilPage() {
             ))}
           </div>
 
-          {/* Completion */}
           {hasMode && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -716,37 +706,27 @@ export default function ProfilPage() {
           </div>
         ) : (
           <>
-            {/* ══ TALENT ══ */}
             {activeMode === 'talent' && (
               <>
                 <Section title="Ma bio" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
-                    ? <textarea
-                        value={talentBio}
-                        onChange={e => setTalentBio(e.target.value)}
-                        placeholder="Décris-toi en quelques phrases..."
-                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
-                      />
+                    ? <textarea value={talentBio} onChange={e => setTalentBio(e.target.value)} placeholder="Décris-toi en quelques phrases..."
+                        style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{talentBio || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-
                 <Section title="Mes compétences" card={card} cardBorder={cardBorder} hint={hint}>
-                  <SearchSelector
-                    all={ALL_SKILLS} selected={talentSkills}
+                  <SearchSelector all={ALL_SKILLS} selected={talentSkills}
                     onAdd={(s: string) => setTalentSkills(p => [...p, s])}
                     onRemove={(s: string) => setTalentSkills(p => p.filter(x => x !== s))}
                     placeholder="Tape une lettre pour chercher..."
                     popular={['Beatmaking', 'Coaching sportif', 'Copywriting', 'Danse', 'Figma', 'Mannequin', 'Motion Design', 'Photographie', 'React Native', 'SEO', 'TikTok', 'YouTube production']}
                     max={15} accent={cfg.accent} accentLight={cfg.accentLight}
-                    card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint}
-                  />
+                    card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-
                 <Section title="Liens & démos" card={card} cardBorder={cardBorder} hint={hint}>
                   <LinksManager links={talentLinks} setLinks={setTalentLinks} editing={editing}
                     accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-
                 <Section title="Ma disponibilité" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                     {HOURS_OPTIONS.map(opt => {
@@ -767,7 +747,6 @@ export default function ProfilPage() {
                     })}
                   </div>
                 </Section>
-
                 <Section title="Je suis disponible pour" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {COLLAB_MODES.map(m => {
@@ -791,7 +770,6 @@ export default function ProfilPage() {
               </>
             )}
 
-            {/* ══ PROJET ══ */}
             {activeMode === 'project' && (
               <>
                 <Section title="Nom du projet" card={card} cardBorder={cardBorder} hint={hint}>
@@ -800,21 +778,18 @@ export default function ProfilPage() {
                         style={{ width: '100%', padding: '9px 12px', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', color: text, fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{projectName || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-
                 <Section title="Bio fondateur" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
                     ? <textarea value={projectBio} onChange={e => setProjectBio(e.target.value)} placeholder="Qui es-tu ? Pourquoi ce projet ?"
                         style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{projectBio || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-
                 <Section title="Le projet" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
                     ? <textarea value={projectDesc} onChange={e => setProjectDesc(e.target.value)} placeholder="Le problème, la solution, la cible..."
                         style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{projectDesc || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-
                 <Section title="Stade & Mode de travail" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '14px' }}>
                     {STAGES.map(s => (
@@ -838,17 +813,15 @@ export default function ProfilPage() {
                     ))}
                   </div>
                 </Section>
-
                 <Section title="Secteurs" card={card} cardBorder={cardBorder} hint={hint}>
                   <SearchSelector all={ALL_SECTORS} selected={projectSectors}
                     onAdd={(s: string) => setProjectSectors(p => [...p, s])}
                     onRemove={(s: string) => setProjectSectors(p => p.filter(x => x !== s))}
                     placeholder="GreenTech, SaaS, EdTech..."
-                    popular={POPULAR_SECTORS.slice(0, 6)}
-                    max={8} accent={cfg.accent} accentLight={cfg.accentLight}
+                    popular={POPULAR_SECTORS.slice(0, 6)} max={8}
+                    accent={cfg.accent} accentLight={cfg.accentLight}
                     card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-
                 <Section title="Compétences recherchées" card={card} cardBorder={cardBorder} hint={hint}>
                   <SearchSelector all={ALL_SKILLS} selected={projectNeeds}
                     onAdd={(s: string) => setProjectNeeds(p => [...p, s])}
@@ -858,7 +831,6 @@ export default function ProfilPage() {
                     max={10} accent={cfg.accent} accentLight={cfg.accentLight}
                     card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-
                 <Section title="Rémunération" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
@@ -877,7 +849,6 @@ export default function ProfilPage() {
                     </div>
                   </div>
                 </Section>
-
                 <Section title="Types de collaboration" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {COLLAB_MODES.map(m => {
@@ -898,7 +869,6 @@ export default function ProfilPage() {
                     })}
                   </div>
                 </Section>
-
                 <Section title="Liens" card={card} cardBorder={cardBorder} hint={hint}>
                   <LinksManager links={projectLinks} setLinks={setProjectLinks} editing={editing}
                     accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
@@ -906,7 +876,6 @@ export default function ProfilPage() {
               </>
             )}
 
-            {/* ══ INVESTISSEUR ══ */}
             {activeMode === 'investor' && (
               <>
                 <Section title="Ma bio" card={card} cardBorder={cardBorder} hint={hint}>
@@ -915,14 +884,12 @@ export default function ProfilPage() {
                         style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{investorBio || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-
                 <Section title="Ma thèse d'investissement" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing
                     ? <textarea value={investorThesis} onChange={e => setInvestorThesis(e.target.value)} placeholder="Quel type de projets ?"
                         style={{ width: '100%', background: surface, border: `1px solid ${cardBorder}`, borderRadius: '10px', padding: '10px', color: text, fontSize: '12px', outline: 'none', resize: 'none', minHeight: '80px', boxSizing: 'border-box' as const, fontFamily: 'inherit' }} />
                     : <div style={{ fontSize: '13px', color: muted, lineHeight: 1.6 }}>{investorThesis || <span style={{ color: hint, fontStyle: 'italic' }}>Non renseigné</span>}</div>}
                 </Section>
-
                 <Section title="Ticket d'investissement (€)" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
@@ -941,17 +908,15 @@ export default function ProfilPage() {
                     </div>
                   </div>
                 </Section>
-
                 <Section title="Secteurs d'investissement" card={card} cardBorder={cardBorder} hint={hint}>
                   <SearchSelector all={ALL_SECTORS} selected={investorSectors}
                     onAdd={(s: string) => setInvestorSectors(p => [...p, s])}
                     onRemove={(s: string) => setInvestorSectors(p => p.filter(x => x !== s))}
                     placeholder="GreenTech, FinTech..."
-                    popular={POPULAR_SECTORS.slice(0, 6)}
-                    max={8} accent={cfg.accent} accentLight={cfg.accentLight}
+                    popular={POPULAR_SECTORS.slice(0, 6)} max={8}
+                    accent={cfg.accent} accentLight={cfg.accentLight}
                     card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
                 </Section>
-
                 <Section title="Stades préférés" card={card} cardBorder={cardBorder} hint={hint}>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
                     {STAGES.map(s => {
@@ -965,7 +930,6 @@ export default function ProfilPage() {
                     })}
                   </div>
                 </Section>
-
                 <Section title="Portfolio" card={card} cardBorder={cardBorder} hint={hint}>
                   {editing && (
                     <button onClick={() => setInvestorPortfolio(p => [...p, { name: 'Nouveau projet', stage: 'Idée', amount: '0€' }])}
@@ -991,7 +955,6 @@ export default function ProfilPage() {
                   ))}
                   {investorPortfolio.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: muted, fontSize: '11px' }}>Aucun investissement pour l'instant</div>}
                 </Section>
-
                 <Section title="Liens" card={card} cardBorder={cardBorder} hint={hint}>
                   <LinksManager links={investorLinks} setLinks={setInvestorLinks} editing={editing}
                     accent={cfg.accent} accentLight={cfg.accentLight} card={card} cardBorder={cardBorder} surface={surface} text={text} muted={muted} hint={hint} />
@@ -999,6 +962,13 @@ export default function ProfilPage() {
               </>
             )}
 
+            {/* Bouton Paramètres */}
+            <button onClick={() => window.location.href = '/profil/parametres'}
+              style={{ width: '100%', padding: '13px', background: 'transparent', border: `1px solid ${cardBorder}`, borderRadius: '14px', color: muted, fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              ⚙️ Paramètres
+            </button>
+
+            {/* Bouton Déconnexion */}
             <button onClick={async () => { await supabase.auth.signOut(); localStorage.clear(); window.location.href = '/' }}
               style={{ width: '100%', padding: '13px', background: 'transparent', border: `1px solid rgba(248,113,113,0.25)`, borderRadius: '14px', color: '#F87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '16px' }}>
               Se déconnecter
