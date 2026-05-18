@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useMode, Mode } from '../context/ModeContext'
-import { supabase } from '../lib/supabase'
+import { supabase, getCachedProfile } from '../lib/supabase'
 import { getMatchScore } from '../lib/matching'
 
 const MODE_CONFIG = {
@@ -79,11 +79,11 @@ export default function HomePage() {
 
       setFirstName(localStorage.getItem('px_firstName') || '')
 
-      const { data: profileData } = await supabase.from('profiles').select('first_name, avatar_url').eq('id', user.id).single()
+      const profileData = await getCachedProfile(user.id)
       if (profileData) {
-        setFirstName(profileData.first_name || '')
-        setAvatarUrl(profileData.avatar_url || '')
-      }
+  setFirstName(profileData.first_name || '')
+  setAvatarUrl(profileData.avatar_url || '')
+}
 
       const { count: total } = await supabase
         .from('matches').select('*', { count: 'exact', head: true })

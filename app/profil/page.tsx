@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useMode, Mode } from '../context/ModeContext'
-import { supabase } from '../lib/supabase'
+import { supabase, getCachedProfile, clearCache } from '../lib/supabase'
 
 const ALL_SKILLS = [
   'Ableton Live', 'Acting', 'Adobe XD', 'After Effects', 'Agile', 'Airtable',
@@ -454,7 +454,7 @@ export default function ProfilPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) { window.location.href = '/'; return }
         setUserId(user.id)
-        const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        const p = await getCachedProfile(user.id)
         if (p) {
           setDisplayName(`${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Mon profil')
           setDisplayAge(p.age ? `${p.age} ans` : '')
@@ -509,6 +509,8 @@ export default function ProfilPage() {
   async function handleSave() {
     setSaving(true)
     try {
+      clearCache(userId)
+await supabase.from('profiles').update({ city: editCity }).eq('id', userId)
       await supabase.from('profiles').update({ city: editCity }).eq('id', userId)
       setDisplayCity(editCity)
       if (activeMode === 'talent') {
