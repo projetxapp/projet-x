@@ -294,7 +294,7 @@ function Stat({
       ) : (
         <Text className="text-[26px] font-black tracking-tight text-text">{value ?? 0}</Text>
       )}
-      <Text variant="caption" numberOfLines={2}>
+      <Text variant="caption" numberOfLines={3}>
         {label}
       </Text>
     </View>

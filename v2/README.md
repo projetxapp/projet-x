@@ -57,8 +57,12 @@ cp .env.example .env.local
 # → EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<clé publishable locale>
 # → EXPO_PUBLIC_SITE_URL=http://localhost:8081
 npm run web               # http://localhost:8081
-npm start                 # QR code pour Expo Go / dev client (i = iOS, a = Android)
+npm start                 # app mobile : nécessite un « development build » (voir ci-dessous)
 ```
+
+L'app utilise des modules natifs absents d'Expo Go (clavier, Sign in with Apple, notifications…) :
+installer une fois un **development build** (`eas build --profile development --platform ios|android`,
+ou `npx expo run:ios` / `npx expo run:android` avec Xcode / Android Studio), puis `npm start`.
 
 Comptes de démo (seed local) : `demo@projetx.test` / `projetx-demo` (3 modes, admin de
 modération, likes et demandes en attente, un match avec message). Les autres profils :
