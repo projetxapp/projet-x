@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Ton lien de connexion</title>
+  </head>
+  <body style="margin:0;padding:0;background:#08070F;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#08070F;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#111019;border:1px solid #221f33;border-radius:24px;padding:36px 28px;">
+            <tr>
+              <td align="center" style="padding-bottom:24px;">
+                <div style="display:inline-block;width:64px;height:64px;line-height:64px;border-radius:20px;background:#6D28D9;background-image:linear-gradient(135deg,#6D28D9,#0891B2);color:#ffffff;font-size:30px;text-align:center;">&#10022;</div>
+                <div style="margin-top:12px;color:#F0EEFF;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Projet X</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="color:#F0EEFF;font-size:22px;font-weight:800;letter-spacing:-0.4px;padding-bottom:10px;text-align:center;">Ton lien de connexion ✦</td>
+            </tr>
+            <tr>
+              <td style="color:#A5A1C2;font-size:15px;line-height:1.6;text-align:center;padding-bottom:28px;">Clique ci-dessous pour te connecter à Projet X. Le lien est valable 1 heure et ne peut servir qu'une fois.</td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom:28px;">
+                <a href="{{ .SiteURL }}/confirm?token_hash={{ .TokenHash }}&type=magiclink" style="display:inline-block;background:#6D28D9;background-image:linear-gradient(135deg,#6D28D9,#0891B2);color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;padding:15px 30px;border-radius:16px;">Me connecter</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="color:#7C7896;font-size:12px;line-height:1.6;text-align:center;">
+                Le bouton ne marche pas ? Copie ce lien dans ton navigateur :<br />
+                <a href="{{ .SiteURL }}/confirm?token_hash={{ .TokenHash }}&type=magiclink" style="color:#A78BFA;word-break:break-all;">{{ .SiteURL }}/confirm?token_hash={{ .TokenHash }}&type=magiclink</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="color:#7C7896;font-size:12px;line-height:1.6;text-align:center;padding-top:24px;border-top:1px solid #221f33;">
+                Tu n'as rien demandé ? Ignore cet email.<br />Projet X · Le Tinder de l'entrepreneuriat · <a href="{{ .SiteURL }}" style="color:#A78BFA;">projetx.app</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

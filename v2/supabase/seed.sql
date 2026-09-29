@@ -1,0 +1,1 @@
+-- Local seed (demo data). Loaded by 'supabase db reset' only — never in prod.
