@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /home
+Disallow: /chat
+Disallow: /swipe
+Disallow: /explorer
+Disallow: /profil
+Disallow: /notifications
+Disallow: /parametres
+Disallow: /likes
+Disallow: /demandes
+Disallow: /bloques
+Disallow: /moderation
+Disallow: /onboarding
+Disallow: /confirm
+Disallow: /update-password
+Disallow: /auth/
+Disallow: /u/
+
+Sitemap: https://projetx.app/sitemap.xml

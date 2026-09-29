@@ -92,7 +92,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={hidden ? 'Afficher le mot de passe' : 'Masquer le mot de passe'}
-            hitSlop={10}
+            className="-mr-2.5 h-11 w-11 items-center justify-center"
             onPress={() => setHidden((h) => !h)}>
             {hidden ? (
               <Eye size={20} color={palette.muted} />

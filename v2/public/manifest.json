@@ -1,0 +1,24 @@
+{
+  "name": "Projet X — Le Tinder de l'entrepreneuriat",
+  "short_name": "Projet X",
+  "description": "Talents, porteurs de projet et investisseurs se trouvent en un swipe.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/home",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#08070F",
+  "theme_color": "#08070F",
+  "categories": ["business", "social", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

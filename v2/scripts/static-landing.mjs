@@ -3,7 +3,7 @@
  * rendered by Expo Router, so it is shipped WITHOUT the app bundle (instant load,
  * Lighthouse-friendly). Links are plain <a href>, the demo is CSS.
  *  - removes the hydration scripts,
- *  - prefetches the app bundle at idle priority (next page loads instantly),
+ *  - prefetches the app bundle once the page is loaded and idle (next page loads instantly),
  *  - sends signed-in visitors straight to /home.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -26,7 +26,8 @@ html = html
 
 // supabase-js keeps the session under our storage key ('px-auth', see src/lib/supabase.ts).
 const redirect = `<script>(function(){try{var s=JSON.parse(localStorage.getItem('px-auth')||'null');if(s&&s.refresh_token)location.replace('/home');}catch(e){}})();</script>`;
-const prefetch = bundles.map((src) => `<link rel="prefetch" href="${src}" as="script">`).join('');
+// Added after load + idle so it never competes with the landing's own resources.
+const prefetch = `<script>addEventListener('load',function(){setTimeout(function(){${JSON.stringify(bundles)}.forEach(function(s){var l=document.createElement('link');l.rel='prefetch';l.as='script';l.href=s;document.head.appendChild(l);});},3000);});</script>`;
 html = html.replace('</head>', `${redirect}${prefetch}</head>`);
 
 if (/__EXPO_ROUTER_HYDRATE__|<script src=/.test(html)) {
