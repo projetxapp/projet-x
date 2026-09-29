@@ -1,11 +1,11 @@
-import { AppHeader } from '@/components/app/app-header';
-import { Screen, Text } from '@/components/ui';
+import { PageHead } from '@/components/app/page-head';
+import { ProfileScreen } from '@/features/profile/profile-screen';
 
-export default function Placeholder() {
+export default function Profil() {
   return (
-    <Screen>
-      <AppHeader />
-      <Text className="px-5">profil</Text>
-    </Screen>
+    <>
+      <PageHead title="Mon profil" noindex />
+      <ProfileScreen />
+    </>
   );
 }

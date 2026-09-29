@@ -107,6 +107,7 @@ begin
                                     'needs', '["Figma","TikTok","Montage vidéo"]'::jsonb, 'collab_modes', '["Flash","Side","Equity"]'::jsonb),
       'investor', jsonb_build_object('ticket', 'small', 'sectors', '["GreenTech","FinTech","HealthTech"]'::jsonb,
                                      'preferred_stages', '["Idée","Prototype"]'::jsonb))), 1);
+  insert into public.admins (user_id) values (v_demo);
   update public.talent_profiles set bio = 'Étudiant à l''ESSCA, je construis des produits et j''adore bosser avec des créatifs.' where user_id = v_demo;
   update public.project_profiles set description = 'Le Tinder de l''entrepreneuriat : talents, projets et investisseurs se trouvent en un swipe.',
          founder_bio = 'Fondateur de Projet X.' where user_id = v_demo;
