@@ -33,7 +33,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const claim = await rpc<Claim | null>('claim_notification_push', { p_notification_id: notificationId });
+    const claim = await rpc<Claim | null>('claim_notification_push', {
+      p_notification_id: notificationId,
+    });
     if (!claim) return json({ sent: 0 }); // already pushed, muted, or no device
 
     const messages = claim.tokens.map((to) => ({

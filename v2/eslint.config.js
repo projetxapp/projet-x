@@ -18,10 +18,24 @@ module.exports = defineConfig([
     ],
   },
   {
+    files: ['**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
+  },
+  {
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // French copy is full of apostrophes; React Native <Text> renders them as-is.
+      'react/no-unescaped-entities': 'off',
+    },
+  },
+  {
+    files: ['scripts/**', 'tests/**', 'supabase/load/**'],
+    rules: { 'no-console': 'off' },
   },
 ]);

@@ -10,7 +10,9 @@ export type LocalStack = {
 };
 
 export function localStack(): LocalStack {
-  const raw = execSync('npx supabase status -o json', { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+  const raw = execSync('npx supabase status -o json', {
+    stdio: ['ignore', 'pipe', 'ignore'],
+  }).toString();
   const status = JSON.parse(raw.slice(raw.indexOf('{'))) as Record<string, string>;
   return {
     apiUrl: status.API_URL!,

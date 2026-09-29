@@ -11,6 +11,9 @@ import http from 'node:http';
 import { after, before, describe, it } from 'node:test';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+import type { Me, SwipeResult } from '../../src/types/app';
+import type { Database } from '../../src/types/database';
 import postgres from 'postgres';
 
 import { localStack } from './local-stack';
@@ -24,13 +27,17 @@ type PushCall = { to: string; title: string; body: string };
 const pushCalls: PushCall[] = [];
 let mockExpo: http.Server;
 
-function client(): SupabaseClient {
-  return createClient(stack.apiUrl, stack.anonKey, {
+function client(): SupabaseClient<Database> {
+  return createClient<Database>(stack.apiUrl, stack.anonKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 }
 
-async function waitFor<T>(fn: () => Promise<T | undefined | null | false>, label: string, ms = 15000): Promise<T> {
+async function waitFor<T>(
+  fn: () => Promise<T | undefined | null | false>,
+  label: string,
+  ms = 15000,
+): Promise<T> {
   const start = Date.now();
   for (;;) {
     const value = await fn();
@@ -42,7 +49,9 @@ async function waitFor<T>(fn: () => Promise<T | undefined | null | false>, label
 
 async function confirmationLink(email: string): Promise<string> {
   const message = await waitFor(async () => {
-    const res = await fetch(`${stack.mailpitUrl}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`);
+    const res = await fetch(
+      `${stack.mailpitUrl}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
+    );
     const body = (await res.json()) as { messages: { ID: string; Subject: string }[] };
     return body.messages[0];
   }, `email to ${email}`);
@@ -50,16 +59,23 @@ async function confirmationLink(email: string): Promise<string> {
   const res = await fetch(`${stack.mailpitUrl}/api/v1/message/${message.ID}`);
   const { HTML } = (await res.json()) as { HTML: string };
   const link = HTML.match(/href="([^"]*\/confirm\?token_hash=[^"]+)"/)?.[1];
-  assert.ok(link, 'confirmation link with token_hash');
+  if (!link) throw new Error('confirmation link with token_hash not found');
   return link.replaceAll('&amp;', '&');
 }
 
-async function signUpAndConfirm(email: string, onboarding: Record<string, unknown>, firstName: string) {
+async function signUpAndConfirm(
+  email: string,
+  onboarding: Record<string, unknown>,
+  firstName: string,
+) {
   const c = client();
   const { data, error } = await c.auth.signUp({
     email,
     password,
-    options: { data: { first_name: firstName, last_name: 'Test', onboarding }, emailRedirectTo: 'http://localhost:8081/confirm' },
+    options: {
+      data: { first_name: firstName, last_name: 'Test', onboarding },
+      emailRedirectTo: 'http://localhost:8081/confirm',
+    },
   });
   assert.equal(error, null);
   assert.equal(data.session, null, 'no session before the email is confirmed');
@@ -77,23 +93,27 @@ async function signUpAndConfirm(email: string, onboarding: Record<string, unknow
 }
 
 describe('Projet X journey', () => {
-  let lea: { c: SupabaseClient; userId: string };
-  let tom: { c: SupabaseClient; userId: string };
+  let lea: { c: SupabaseClient<Database>; userId: string };
+  let tom: { c: SupabaseClient<Database>; userId: string };
   let matchId: string;
 
   before(async () => {
-    mockExpo = http.createServer((req, res) => {
+    mockExpo = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       let body = '';
-      req.on('data', (chunk) => (body += chunk));
+      req.on('data', (chunk: Buffer) => (body += chunk.toString()));
       req.on('end', () => {
         const messages = JSON.parse(body) as PushCall[];
         pushCalls.push(...messages);
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({
-          data: messages.map((m) => m.to.includes('dead')
-            ? { status: 'error', details: { error: 'DeviceNotRegistered' } }
-            : { status: 'ok', id: randomUUID() }),
-        }));
+        res.end(
+          JSON.stringify({
+            data: messages.map((m) =>
+              m.to.includes('dead')
+                ? { status: 'error', details: { error: 'DeviceNotRegistered' } }
+                : { status: 'ok', id: randomUUID() },
+            ),
+          }),
+        );
       });
     });
     await new Promise<void>((r) => mockExpo.listen(54399, '0.0.0.0', () => r()));
@@ -109,58 +129,110 @@ describe('Projet X journey', () => {
   });
 
   it('signs up with the full onboarding and confirms the email', async () => {
-    lea = await signUpAndConfirm(`lea.${run}@test.projetx.app`, {
-      age: 21, city: '75 - Paris', school: 'ESSCA', roles: ['talent'],
-      talent: { skills: ['React', 'Figma'], hours_per_week: 'heavy', collab_modes: ['Flash', 'Side'] },
-    }, 'Léa');
-    tom = await signUpAndConfirm(`tom.${run}@test.projetx.app`, {
-      age: 23, city: '92 - Hauts-de-Seine', roles: ['project'],
-      project: { project_name: `EcoTrack ${run}`, stage: 'Prototype', needs: ['React'], sectors: ['GreenTech'], collab_modes: ['Flash'] },
-    }, 'Tom');
+    lea = await signUpAndConfirm(
+      `lea.${run}@test.projetx.app`,
+      {
+        age: 21,
+        city: '75 - Paris',
+        school: 'ESSCA',
+        roles: ['talent'],
+        talent: {
+          skills: ['React', 'Figma'],
+          hours_per_week: 'heavy',
+          collab_modes: ['Flash', 'Side'],
+        },
+      },
+      'Léa',
+    );
+    tom = await signUpAndConfirm(
+      `tom.${run}@test.projetx.app`,
+      {
+        age: 23,
+        city: '92 - Hauts-de-Seine',
+        roles: ['project'],
+        project: {
+          project_name: `EcoTrack ${run}`,
+          stage: 'Prototype',
+          needs: ['React'],
+          sectors: ['GreenTech'],
+          collab_modes: ['Flash'],
+        },
+      },
+      'Tom',
+    );
 
-    const { data: me, error } = await lea.c.rpc('get_me');
+    const { data, error } = await lea.c.rpc('get_me');
     assert.equal(error, null);
+    const me = data as unknown as Me;
     assert.deepEqual(me.modes, ['talent']);
     assert.equal(me.profile.onboarding_completed, true);
     assert.equal(me.profile.city, '75 - Paris');
-    assert.deepEqual(me.talent.skills, ['React', 'Figma']);
+    assert.deepEqual(me.talent?.skills, ['React', 'Figma']);
   });
 
   it('finds each other in the scored deck and matches (server-side)', async () => {
-    const { data: deck, error } = await tom.c.rpc('get_swipe_deck', { p_user_id: tom.userId, p_mode: 'project', p_limit: 50, p_offset: 0 });
+    const { data: deck, error } = await tom.c.rpc('get_swipe_deck', {
+      p_user_id: tom.userId,
+      p_mode: 'project',
+      p_limit: 50,
+      p_offset: 0,
+    });
     assert.equal(error, null);
     const card = deck!.find((c) => c.user_id === lea.userId);
-    assert.ok(card, 'Léa is in Tom\'s deck');
+    assert.ok(card, "Léa is in Tom's deck");
     assert.ok(card.score > 0 && card.score <= 99);
     assert.ok(card.reasons.some((r: string) => r.includes('React')));
 
-    const first = await tom.c.rpc('swipe', { p_target: lea.userId, p_mode: 'project', p_direction: 'like' });
-    assert.equal(first.data.matched, false);
-    const second = await lea.c.rpc('swipe', { p_target: tom.userId, p_mode: 'talent', p_direction: 'like' });
-    assert.equal(second.data.matched, true);
-    matchId = second.data.match_id;
+    const first = (
+      await tom.c.rpc('swipe', { p_target: lea.userId, p_mode: 'project', p_direction: 'like' })
+    ).data as unknown as SwipeResult;
+    assert.equal(first.matched, false);
+    const second = (
+      await lea.c.rpc('swipe', { p_target: tom.userId, p_mode: 'talent', p_direction: 'like' })
+    ).data as unknown as SwipeResult;
+    assert.equal(second.matched, true);
+    matchId = second.match_id!;
 
-    const { error: forged } = await lea.c.from('matches').insert({ user1_id: lea.userId, user2_id: tom.userId, mode1: 'talent', mode2: 'project' });
+    const { error: forged } = await lea.c
+      .from('matches')
+      .insert({ user1_id: lea.userId, user2_id: tom.userId, mode1: 'talent', mode2: 'project' });
     assert.ok(forged, 'clients cannot create matches');
   });
 
   it('delivers messages in realtime and sends a push', async () => {
     const received: { event: string; payload: Record<string, unknown> }[] = [];
     const channel = lea.c.channel(`user:${lea.userId}`, { config: { private: true } });
-    channel.on('broadcast', { event: '*' }, (msg) => received.push({ event: msg.event, payload: msg.payload }));
-    await waitFor(() => new Promise<boolean>((resolve) => {
-      channel.subscribe((status) => resolve(status === 'SUBSCRIBED'));
-    }), 'realtime subscription');
+    channel.on('broadcast', { event: '*' }, (msg) =>
+      received.push({ event: msg.event, payload: msg.payload }),
+    );
+    await waitFor(
+      () =>
+        new Promise<boolean>((resolve) => {
+          channel.subscribe((status) => resolve(status === 'SUBSCRIBED'));
+        }),
+      'realtime subscription',
+    );
 
-    const push = await lea.c.rpc('register_push_token', { p_token: `ExponentPushToken[lea-${run}]`, p_platform: 'ios' });
+    const push = await lea.c.rpc('register_push_token', {
+      p_token: `ExponentPushToken[lea-${run}]`,
+      p_platform: 'ios',
+    });
     assert.equal(push.error, null);
 
-    const { error } = await tom.c.from('messages').insert({ match_id: matchId, sender_id: tom.userId, content: 'Salut Léa 👋' });
+    const { error } = await tom.c
+      .from('messages')
+      .insert({ match_id: matchId, sender_id: tom.userId, content: 'Salut Léa 👋' });
     assert.equal(error, null);
 
     await waitFor(async () => received.some((r) => r.event === 'message'), 'realtime message');
-    await waitFor(async () => received.some((r) => r.event === 'notification'), 'realtime notification');
-    const pushed = await waitFor(async () => pushCalls.find((p) => p.to === `ExponentPushToken[lea-${run}]`), 'push to Léa');
+    await waitFor(
+      async () => received.some((r) => r.event === 'notification'),
+      'realtime notification',
+    );
+    const pushed = await waitFor(
+      async () => pushCalls.find((p) => p.to === `ExponentPushToken[lea-${run}]`),
+      'push to Léa',
+    );
     assert.equal(pushed.title, '💬 Tom');
     assert.equal(pushed.body, 'Salut Léa 👋');
 
@@ -176,33 +248,46 @@ describe('Projet X journey', () => {
   });
 
   it('forgets dead push tokens', async () => {
-    await tom.c.rpc('register_push_token', { p_token: `ExponentPushToken[dead-${run}]`, p_platform: 'android' });
-    await lea.c.from('messages').insert({ match_id: matchId, sender_id: lea.userId, content: 'Top !' });
+    await tom.c.rpc('register_push_token', {
+      p_token: `ExponentPushToken[dead-${run}]`,
+      p_platform: 'android',
+    });
+    await lea.c
+      .from('messages')
+      .insert({ match_id: matchId, sender_id: lea.userId, content: 'Top !' });
     await waitFor(async () => {
-      const [row] = await sql`select count(*)::int as n from public.push_tokens where token = ${`ExponentPushToken[dead-${run}]`}`;
+      const [row] =
+        await sql`select count(*)::int as n from public.push_tokens where token = ${`ExponentPushToken[dead-${run}]`}`;
       return row!.n === 0;
     }, 'dead token cleanup');
   });
 
   it('exports and deletes the account (data + storage + auth)', async () => {
     const avatar = new Blob([new Uint8Array([82, 73, 70, 70])], { type: 'image/webp' });
-    const upload = await lea.c.storage.from('avatars').upload(`${lea.userId}/avatar.webp`, avatar, { upsert: true });
+    const upload = await lea.c.storage
+      .from('avatars')
+      .upload(`${lea.userId}/avatar.webp`, avatar, { upsert: true });
     assert.equal(upload.error, null);
     const forbidden = await lea.c.storage.from('avatars').upload(`${tom.userId}/hack.webp`, avatar);
-    assert.ok(forbidden.error, 'cannot write into someone else\'s folder');
+    assert.ok(forbidden.error, "cannot write into someone else's folder");
 
     const { data: exported } = await lea.c.rpc('export_my_data');
-    assert.ok(exported.messages.length >= 2);
+    assert.ok((exported as unknown as { messages: unknown[] }).messages.length >= 2);
 
     const { data, error } = await lea.c.functions.invoke('delete-account', { method: 'POST' });
     assert.equal(error, null);
     assert.equal(data.deleted, true);
 
-    const [profile] = await sql`select count(*)::int as n from public.profiles where id = ${lea.userId}`;
+    const [profile] =
+      await sql`select count(*)::int as n from public.profiles where id = ${lea.userId}`;
     assert.equal(profile!.n, 0);
-    const [objects] = await sql`select count(*)::int as n from storage.objects where name like ${lea.userId + '/%'}`;
+    const [objects] =
+      await sql`select count(*)::int as n from storage.objects where name like ${lea.userId + '/%'}`;
     assert.equal(objects!.n, 0);
-    const relogin = await client().auth.signInWithPassword({ email: `lea.${run}@test.projetx.app`, password });
+    const relogin = await client().auth.signInWithPassword({
+      email: `lea.${run}@test.projetx.app`,
+      password,
+    });
     assert.ok(relogin.error, 'deleted account cannot sign in');
   });
 });

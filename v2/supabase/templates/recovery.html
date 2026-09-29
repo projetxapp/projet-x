@@ -6,37 +6,131 @@
     <meta name="color-scheme" content="dark light" />
     <title>Réinitialise ton mot de passe</title>
   </head>
-  <body style="margin:0;padding:0;background:#08070F;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#08070F;padding:32px 16px;">
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #08070f;
+      font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    ">
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background: #08070f; padding: 32px 16px">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#111019;border:1px solid #221f33;border-radius:24px;padding:36px 28px;">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 480px;
+              background: #111019;
+              border: 1px solid #221f33;
+              border-radius: 24px;
+              padding: 36px 28px;
+            ">
             <tr>
-              <td align="center" style="padding-bottom:24px;">
-                <div style="display:inline-block;width:64px;height:64px;line-height:64px;border-radius:20px;background:#6D28D9;background-image:linear-gradient(135deg,#6D28D9,#0891B2);color:#ffffff;font-size:30px;text-align:center;">&#10022;</div>
-                <div style="margin-top:12px;color:#F0EEFF;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Projet X</div>
+              <td align="center" style="padding-bottom: 24px">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 64px;
+                    height: 64px;
+                    line-height: 64px;
+                    border-radius: 20px;
+                    background: #6d28d9;
+                    background-image: linear-gradient(135deg, #6d28d9, #0891b2);
+                    color: #ffffff;
+                    font-size: 30px;
+                    text-align: center;
+                  ">
+                  &#10022;
+                </div>
+                <div
+                  style="
+                    margin-top: 12px;
+                    color: #f0eeff;
+                    font-size: 22px;
+                    font-weight: 900;
+                    letter-spacing: -0.5px;
+                  ">
+                  Projet X
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="color:#F0EEFF;font-size:22px;font-weight:800;letter-spacing:-0.4px;padding-bottom:10px;text-align:center;">Nouveau mot de passe ?</td>
-            </tr>
-            <tr>
-              <td style="color:#A5A1C2;font-size:15px;line-height:1.6;text-align:center;padding-bottom:28px;">Tu as demandé à réinitialiser ton mot de passe. Clique ci-dessous pour en choisir un nouveau. Le lien expire dans 1 heure.</td>
-            </tr>
-            <tr>
-              <td align="center" style="padding-bottom:28px;">
-                <a href="{{ .SiteURL }}/update-password?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;background:#6D28D9;background-image:linear-gradient(135deg,#6D28D9,#0891B2);color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;padding:15px 30px;border-radius:16px;">Choisir un nouveau mot de passe</a>
+              <td
+                style="
+                  color: #f0eeff;
+                  font-size: 22px;
+                  font-weight: 800;
+                  letter-spacing: -0.4px;
+                  padding-bottom: 10px;
+                  text-align: center;
+                ">
+                Nouveau mot de passe ?
               </td>
             </tr>
             <tr>
-              <td style="color:#7C7896;font-size:12px;line-height:1.6;text-align:center;">
+              <td
+                style="
+                  color: #a5a1c2;
+                  font-size: 15px;
+                  line-height: 1.6;
+                  text-align: center;
+                  padding-bottom: 28px;
+                ">
+                Tu as demandé à réinitialiser ton mot de passe. Clique ci-dessous pour en choisir un
+                nouveau. Le lien expire dans 1 heure.
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 28px">
+                <a
+                  href="{{ .SiteURL }}/update-password?token_hash={{ .TokenHash }}&type=recovery"
+                  style="
+                    display: inline-block;
+                    background: #6d28d9;
+                    background-image: linear-gradient(135deg, #6d28d9, #0891b2);
+                    color: #ffffff;
+                    text-decoration: none;
+                    font-size: 16px;
+                    font-weight: 800;
+                    padding: 15px 30px;
+                    border-radius: 16px;
+                  "
+                  >Choisir un nouveau mot de passe</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td style="color: #7c7896; font-size: 12px; line-height: 1.6; text-align: center">
                 Le bouton ne marche pas ? Copie ce lien dans ton navigateur :<br />
-                <a href="{{ .SiteURL }}/update-password?token_hash={{ .TokenHash }}&type=recovery" style="color:#A78BFA;word-break:break-all;">{{ .SiteURL }}/update-password?token_hash={{ .TokenHash }}&type=recovery</a>
+                <a
+                  href="{{ .SiteURL }}/update-password?token_hash={{ .TokenHash }}&type=recovery"
+                  style="color: #a78bfa; word-break: break-all"
+                  >{{ .SiteURL }}/update-password?token_hash={{ .TokenHash }}&type=recovery</a
+                >
               </td>
             </tr>
             <tr>
-              <td style="color:#7C7896;font-size:12px;line-height:1.6;text-align:center;padding-top:24px;border-top:1px solid #221f33;">
-                Ce n'était pas toi ? Ignore cet email, ton mot de passe reste inchangé.<br />Projet X · Le Tinder de l'entrepreneuriat · <a href="{{ .SiteURL }}" style="color:#A78BFA;">projetx.app</a>
+              <td
+                style="
+                  color: #7c7896;
+                  font-size: 12px;
+                  line-height: 1.6;
+                  text-align: center;
+                  padding-top: 24px;
+                  border-top: 1px solid #221f33;
+                ">
+                Ce n'était pas toi ? Ignore cet email, ton mot de passe reste inchangé.<br />Projet
+                X · Le Tinder de l'entrepreneuriat ·
+                <a href="{{ .SiteURL }}" style="color: #a78bfa">projetx.app</a>
               </td>
             </tr>
           </table>
