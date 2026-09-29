@@ -10,6 +10,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
+import { Platform } from 'react-native';
 
 import { initMonitoring, withMonitoring } from '@/lib/sentry';
 import { AppProviders } from '@/providers/app-providers';
@@ -26,6 +27,11 @@ function RootStack() {
   useEffect(() => {
     if (initialized) SplashScreen.hideAsync().catch(() => undefined);
   }, [initialized]);
+
+  // Web: signals that the statically rendered page is hydrated (used by E2E tests).
+  useEffect(() => {
+    if (Platform.OS === 'web') document.documentElement.dataset.hydrated = 'true';
+  }, []);
 
   const navigationTheme = useMemo(() => {
     const base = scheme === 'dark' ? DarkTheme : DefaultTheme;

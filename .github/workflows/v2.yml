@@ -1,0 +1,95 @@
+# CI for the v2 app (Expo) and its Supabase backend. Everything runs against a local
+# Supabase stack started in the job — never against production.
+name: v2
+
+on:
+  pull_request:
+    paths: ["v2/**", ".github/workflows/v2.yml"]
+  push:
+    branches: [master, main, v2, "claude/**"]
+    paths: ["v2/**", ".github/workflows/v2.yml"]
+
+concurrency:
+  group: v2-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: v2
+
+jobs:
+  app:
+    name: Lint · format · typecheck · unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test -- --ci
+
+  backend:
+    name: Database · Edge Functions · integration · E2E web
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SITE_URL: http://localhost:8081
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: npm ci
+
+      - name: Start local Supabase (migrations + dev seed)
+        run: npx supabase start
+      - name: Security & performance advisors
+        run: npx supabase db advisors --local
+      - name: pgTAP (RLS, matching, chat, social, account)
+        run: npx supabase test db
+      - name: Generated types are in sync with the migrations
+        run: |
+          npx supabase gen types typescript --local --schema public > /tmp/database.ts
+          diff -q /tmp/database.ts src/types/database.ts
+
+      - name: Serve Edge Functions (push → mocked Expo API)
+        run: |
+          printf 'EXPO_PUSH_URL=http://host.docker.internal:54399/push/send\n' > /tmp/functions.env
+          nohup npx supabase functions serve --env-file /tmp/functions.env > /tmp/functions.log 2>&1 &
+          for i in $(seq 1 60); do curl -s -o /dev/null -X OPTIONS http://127.0.0.1:54321/functions/v1/push && break; sleep 2; done
+      - name: Integration journey (signup → match → realtime → push → export → delete)
+        run: npm run test:integration
+
+      - name: Fresh seed for E2E
+        run: npx supabase db reset
+      - name: Build web
+        run: |
+          export EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+          export EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(npx supabase status -o json | jq -r '.PUBLISHABLE_KEY')
+          export EXPO_PUBLIC_SITE_URL=$SITE_URL
+          npm run build:web
+      - name: E2E (Playwright)
+        run: |
+          nohup npm run serve:web > /tmp/serve.log 2>&1 &
+          npx playwright install --with-deps chromium
+          E2E_BASE_URL=$SITE_URL npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            v2/playwright-report
+            v2/test-results
+          retention-days: 7
+      - name: Logs on failure
+        if: failure()
+        run: tail -n 200 /tmp/functions.log /tmp/serve.log || true

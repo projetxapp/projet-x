@@ -47,8 +47,10 @@ select is((select count(*)::integer from public.matches), 1, 'exactly one match 
 select throws_ok($$ select public.undo_last_swipe('talent') $$, 'P0001', 'cannot_undo_match', 'cannot undo a swipe that matched');
 
 reset role;
-select is((select count(*)::integer from public.notifications where type = 'match'), 2, 'both users get a match notification');
-select is((select count(*)::integer from public.notifications where type = 'match' and not read), 1, 'the swiper''s copy is already read (in-app popup)');
+select is((select count(*)::integer from public.notifications where type = 'match'
+            and user_id in ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1')), 2, 'both users get a match notification');
+select is((select count(*)::integer from public.notifications where type = 'match' and not read
+            and user_id in ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1')), 1, 'the swiper''s copy is already read (in-app popup)');
 
 -- investor like → the project owner is notified
 set local role authenticated;

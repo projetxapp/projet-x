@@ -80,7 +80,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "EXPO_UNSTABLE_METRO_OPTIMIZE_GRAPH=1 EXPO_UNSTABLE_TREE_SHAKING=1 expo export -p web --output-dir dist && node scripts/static-landing.mjs dist",
+    "build:web": "EXPO_UNSTABLE_METRO_OPTIMIZE_GRAPH=1 EXPO_UNSTABLE_TREE_SHAKING=1 expo export -p web --output-dir dist && node scripts/static-landing.mjs dist && cp dist/+not-found.html dist/404.html",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -92,8 +92,29 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
-    "db:types": "supabase gen types typescript --local > src/types/database.ts",
-    "db:advisors": "supabase db advisors --local"
+    "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",
+    "db:advisors": "supabase db advisors --local",
+    "serve:web": "node scripts/serve-dist.mjs dist 8081"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.test.ts?(x)"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@sentry/react-native|react-native-svg|lucide-react-native|nativewind|react-native-css-interop|@shopify/.*|react-native-reanimated|react-native-worklets|@radix-ui/.*)"
+    ],
+    "collectCoverageFrom": [
+      "src/lib/**/*.ts",
+      "src/features/**/*.ts",
+      "!src/**/*.d.ts"
+    ]
+  }
 }
