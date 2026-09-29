@@ -1,11 +1,11 @@
-import { AppHeader } from '@/components/app/app-header';
-import { Screen, Text } from '@/components/ui';
+import { PageHead } from '@/components/app/page-head';
+import { ExplorerScreen } from '@/features/explorer/explorer-screen';
 
-export default function Placeholder() {
+export default function Explorer() {
   return (
-    <Screen>
-      <AppHeader />
-      <Text className="px-5">explorer</Text>
-    </Screen>
+    <>
+      <PageHead title="Explorer" noindex />
+      <ExplorerScreen />
+    </>
   );
 }
