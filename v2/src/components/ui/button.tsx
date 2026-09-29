@@ -33,10 +33,23 @@ export type ButtonProps = {
   testID?: string;
 };
 
-const SIZES: Record<Size, { box: string; text: string }> = {
-  lg: { box: 'min-h-[54px] px-6 rounded-btn', text: 'text-[16px]' },
-  md: { box: 'min-h-[46px] px-5 rounded-field', text: 'text-[15px]' },
-  sm: { box: 'min-h-[36px] px-3.5 rounded-xl', text: 'text-[13px]' },
+// `outer` sizes the pressable, `inner` the filled surface (padding lives inside only).
+const SIZES: Record<Size, { outer: string; inner: string; text: string }> = {
+  lg: {
+    outer: 'min-h-[54px] rounded-btn',
+    inner: 'min-h-[54px] px-6 rounded-btn',
+    text: 'text-[16px]',
+  },
+  md: {
+    outer: 'min-h-[46px] rounded-field',
+    inner: 'min-h-[46px] px-5 rounded-field',
+    text: 'text-[15px]',
+  },
+  sm: {
+    outer: 'min-h-[36px] rounded-xl',
+    inner: 'min-h-[36px] px-3.5 rounded-xl',
+    text: 'text-[13px]',
+  },
 };
 
 export const Button = forwardRef<ViewType, ButtonProps>(function Button(
@@ -105,7 +118,7 @@ export const Button = forwardRef<ViewType, ButtonProps>(function Button(
       }
       className={cn(
         'overflow-hidden active:scale-[0.97]',
-        sizes.box,
+        sizes.outer,
         inactive && 'opacity-50',
         className,
       )}
@@ -119,14 +132,14 @@ export const Button = forwardRef<ViewType, ButtonProps>(function Button(
         <Gradient
           colors={gradient}
           direction="horizontal"
-          className={cn('flex-1 items-center justify-center', sizes.box)}>
+          className={cn('flex-1 items-center justify-center', sizes.inner)}>
           {content}
         </Gradient>
       ) : (
         <View
           className={cn(
             'flex-1 items-center justify-center',
-            sizes.box,
+            sizes.inner,
             variant === 'secondary' && 'bg-surface',
             variant === 'outline' && 'border-[1.5px] border-line/15',
             variant === 'danger' && 'bg-danger',

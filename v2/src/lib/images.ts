@@ -15,7 +15,7 @@ export class PermissionDeniedError extends Error {
 }
 
 export async function pickImage(
-  options: { aspect?: [number, number]; camera?: boolean } = {},
+  options: { aspect?: [number, number]; camera?: boolean; edit?: boolean } = {},
 ): Promise<PickedImage | null> {
   if (Platform.OS !== 'web') {
     const permission = options.camera
@@ -28,7 +28,7 @@ export async function pickImage(
     : ImagePicker.launchImageLibraryAsync;
   const result = await launch({
     mediaTypes: ['images'],
-    allowsEditing: true,
+    allowsEditing: options.edit ?? true,
     aspect: options.aspect ?? [1, 1],
     quality: 1,
   });

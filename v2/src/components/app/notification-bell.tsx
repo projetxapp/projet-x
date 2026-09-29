@@ -19,7 +19,7 @@ export function NotificationBell() {
         icon={<Bell size={19} color={palette.text} />}
         onPress={() => router.push('/notifications')}
       />
-      <View className="absolute -right-1 -top-1" pointerEvents="none">
+      <View className="absolute -right-1 -top-1" style={{ pointerEvents: 'none' }}>
         <CountBadge count={count} />
       </View>
     </View>

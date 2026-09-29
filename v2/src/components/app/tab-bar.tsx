@@ -100,7 +100,7 @@ export function AppTabBar({ state, navigation }: TabBarProps) {
                   color={focused ? accent : palette.hint}
                   strokeWidth={focused ? 2.4 : 1.8}
                 />
-                <View className="absolute -right-2.5 -top-1.5" pointerEvents="none">
+                <View className="absolute -right-2.5 -top-1.5" style={{ pointerEvents: 'none' }}>
                   <CountBadge count={badge} />
                 </View>
               </View>

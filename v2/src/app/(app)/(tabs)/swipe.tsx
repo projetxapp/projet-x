@@ -1,11 +1,11 @@
-import { AppHeader } from '@/components/app/app-header';
-import { Screen, Text } from '@/components/ui';
+import { PageHead } from '@/components/app/page-head';
+import { SwipeScreen } from '@/features/swipe/swipe-screen';
 
-export default function Placeholder() {
+export default function Swipe() {
   return (
-    <Screen>
-      <AppHeader />
-      <Text className="px-5">swipe</Text>
-    </Screen>
+    <>
+      <PageHead title="Swipe" noindex />
+      <SwipeScreen />
+    </>
   );
 }

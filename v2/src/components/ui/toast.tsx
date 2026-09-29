@@ -54,9 +54,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <View
-        pointerEvents="box-none"
         className="absolute left-0 right-0 items-center gap-2 px-4"
-        style={{ top: insets.top + 8 }}>
+        style={{ top: insets.top + 8, pointerEvents: 'box-none' }}>
         {toasts.map((toast) => (
           <Animated.View
             key={toast.id}

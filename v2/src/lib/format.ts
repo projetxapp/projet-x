@@ -1,11 +1,13 @@
 /** Formatting helpers (French). Pure functions — unit tested. */
 
-export function greeting(date = new Date()): string {
+/** "Bonjour Léa ☀️", "Bonsoir Léa 🌙"… (name optional). */
+export function greeting(name?: string | null, date = new Date()): string {
   const h = date.getHours();
-  if (h >= 5 && h < 12) return 'Bonjour ☀️';
-  if (h >= 12 && h < 18) return 'Bon après-midi 👋';
-  if (h >= 18 && h < 23) return 'Bonsoir 🌙';
-  return 'Encore debout ? 🦉';
+  const who = name?.trim() ? ` ${name.trim()}` : '';
+  if (h >= 5 && h < 12) return `Bonjour${who} ☀️`;
+  if (h >= 12 && h < 18) return `Bon après-midi${who} 👋`;
+  if (h >= 18 && h < 23) return `Bonsoir${who} 🌙`;
+  return `Encore debout${who ? `,${who}` : ''} ? 🦉`;
 }
 
 export function fullName(first?: string | null, last?: string | null): string {
@@ -130,4 +132,11 @@ export function normalizeUrl(url: string): string {
 
 export function truncate(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+/** "1,2 Mo", "340 Ko". */
+export function formatBytes(bytes: number | null | undefined): string {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo`;
 }
