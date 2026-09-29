@@ -1,0 +1,95 @@
+{
+  "expo": {
+    "name": "Projet X",
+    "slug": "projet-x",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "projetx",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#08070F",
+    "primaryColor": "#6D28D9",
+    "description": "Le Tinder de l'entrepreneuriat : talents, porteurs de projet et investisseurs se trouvent en un swipe.",
+    "githubUrl": "https://github.com/projetxapp/projet-x",
+    "ios": {
+      "bundleIdentifier": "app.projetx",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Projet X a besoin d'accéder à tes photos pour ta photo de profil, la couverture de ton projet et les pièces jointes du chat.",
+        "NSCameraUsageDescription": "Projet X a besoin de l'appareil photo pour prendre ta photo de profil.",
+        "CFBundleAllowMixedLocalizations": true
+      }
+    },
+    "android": {
+      "package": "app.projetx",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#08070F",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.POST_NOTIFICATIONS"],
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png",
+      "name": "Projet X",
+      "shortName": "Projet X",
+      "lang": "fr",
+      "themeColor": "#6D28D9",
+      "backgroundColor": "#08070F",
+      "description": "Le Tinder de l'entrepreneuriat : talents, porteurs de projet et investisseurs se trouvent en un swipe."
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://projetx.app"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#08070F",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120,
+          "dark": {
+            "backgroundColor": "#08070F",
+            "image": "./assets/images/splash-icon.png"
+          }
+        }
+      ],
+      "expo-sqlite",
+      "expo-sharing",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Projet X a besoin d'accéder à tes photos pour ta photo de profil, la couverture de ton projet et les pièces jointes du chat.",
+          "cameraPermission": "Projet X a besoin de l'appareil photo pour prendre ta photo de profil.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#6D28D9"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

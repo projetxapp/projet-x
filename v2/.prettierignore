@@ -1,0 +1,9 @@
+node_modules
+dist
+.expo
+coverage
+playwright-report
+test-results
+src/types/database.ts
+supabase/.temp
+package-lock.json

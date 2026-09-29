@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light theme (#F4F2FF / #FFFFFF). All text colors meet WCAG AA on bg + card. */
+:root {
+  --color-bg: 244 242 255;
+  --color-card: 255 255 255;
+  --color-surface: 236 233 250;
+  --color-line: 13 12 24;
+  --color-text: 13 12 24;
+  --color-muted: 83 79 108;
+  --color-hint: 104 100 130;
+  --color-talent-fg: 109 40 217;
+  --color-project-fg: 14 116 144;
+  --color-investor-fg: 180 83 9;
+  --color-danger-fg: 185 28 28;
+}
+
+/* Dark theme — default (#08070F / #111019 / #1A1828 / #F0EEFF). */
+.dark:root {
+  --color-bg: 8 7 15;
+  --color-card: 17 16 25;
+  --color-surface: 26 24 40;
+  --color-line: 240 238 255;
+  --color-text: 240 238 255;
+  --color-muted: 165 161 194;
+  --color-hint: 124 120 150;
+  --color-talent-fg: 167 139 250;
+  --color-project-fg: 34 211 238;
+  --color-investor-fg: 252 211 77;
+  --color-danger-fg: 248 113 113;
+}
